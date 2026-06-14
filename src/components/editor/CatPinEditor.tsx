@@ -1,16 +1,25 @@
-import { useEffect } from 'react'
+import { useEffect, forwardRef, useImperativeHandle } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
 import { common, createLowlight } from 'lowlight'
 import { cn } from '@/lib/utils'
+import type { Editor } from '@tiptap/react'
 
 // 导入自定义扩展
 import { AIBlock } from './extensions/AIBlock'
 
 // 创建 lowlight 实例
 const lowlight = createLowlight(common)
+
+// CatPinEditor 引用接口
+export interface CatPinEditorRef {
+  /** 获取编辑器实例 */
+  getEditor: () => Editor | null
+  /** 聚焦编辑器 */
+  focus: (position?: 'start' | 'end' | number | boolean) => void
+}
 
 // CatPinEditor 属性接口
 export interface CatPinEditorProps {
@@ -28,10 +37,12 @@ export interface CatPinEditorProps {
   className?: string
   /** 编辑器高度 */
   height?: string | number
+  /** 编辑器引用 */
+  ref?: React.Ref<CatPinEditorRef>
 }
 
 // CatPinEditor 组件
-export function CatPinEditor({
+export const CatPinEditor = forwardRef<CatPinEditorRef, CatPinEditorProps>(function CatPinEditor({
   content = '',
   onChange,
   placeholder = '开始记录...',
@@ -39,7 +50,7 @@ export function CatPinEditor({
   editable = true,
   className,
   height = '100%',
-}: CatPinEditorProps) {
+}, ref) {
   // 创建编辑器
   const editor = useEditor({
     extensions: [
@@ -72,6 +83,16 @@ export function CatPinEditor({
       },
     },
   })
+
+  // 暴露方法给父组件
+  useImperativeHandle(ref, () => ({
+    getEditor: () => editor,
+    focus: (position = 'start') => {
+      if (editor) {
+        editor.chain().focus(position).run()
+      }
+    },
+  }), [editor])
 
   // 保存快捷键
   useEffect(() => {
@@ -140,6 +161,6 @@ export function CatPinEditor({
       </div>
     </div>
   )
-}
+})
 
 export default CatPinEditor

@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { cn } from '@/lib/utils'
-import { CatPinEditor } from '@/components/editor/CatPinEditor'
+import { CatPinEditor, type CatPinEditorRef } from '@/components/editor/CatPinEditor'
 import { useCatPinSave } from '@/hooks/useCatPinSave'
 import type { SaveStatus } from '@/types'
 import { 
@@ -300,8 +300,18 @@ export function MainLayout() {
   const [aiPanelOpen, setAiPanelOpen] = useState(false)
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
+  const editorRef = useRef<CatPinEditorRef>(null)
+  const titleInputRef = useRef<HTMLInputElement>(null)
   
   const { status, progress } = useCatPinSave()
+
+  // 标题回车键处理：焦点转移到编辑器
+  const handleTitleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      editorRef.current?.focus()
+    }
+  }, [])
 
   // 命令列表
   const commands: Command[] = [
@@ -470,15 +480,18 @@ export function MainLayout() {
           <div className="max-w-2xl mx-auto px-8 py-10">
             {/* 标题输入 */}
             <input
+              ref={titleInputRef}
               type="text"
               placeholder="请输入主题"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full text-2xl font-bold bg-transparent text-zinc-100 placeholder-zinc-700 focus:outline-none mb-4"
+              onKeyDown={handleTitleKeyDown}
+              className="w-full text-2xl font-bold bg-transparent text-zinc-100 placeholder-zinc-700 focus:outline-none focus:ring-0 border-none mb-4"
             />
 
             {/* TipTap 编辑器 */}
             <CatPinEditor
+              ref={editorRef}
               content={content}
               onChange={setContent}
               placeholder="开始记录..."
