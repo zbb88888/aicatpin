@@ -283,7 +283,7 @@ export function MainLayout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [aiPanelOpen, setAiPanelOpen] = useState(false)
   const [selectedCategory] = useState('programming')
-  const [selectedTags] = useState<string[]>(['rust', 'systems'])
+  const [selectedTags] = useState<string[]>([])
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   
