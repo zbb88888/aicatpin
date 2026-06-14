@@ -294,9 +294,15 @@ ollama-start: ## 启动 Ollama 服务
 .PHONY: ollama-pull
 ollama-pull: ## 下载所需模型
 	@echo "$(BLUE)下载 Ollama 模型...$(NC)"
-	ollama pull qwen2.5:7b
+	ollama pull gemma4:e2b
 	ollama pull nomic-embed-text
 	@echo "$(GREEN)✓ 模型下载完成$(NC)"
+
+.PHONY: ollama-pull-embedding
+ollama-pull-embedding: ## 下载嵌入模型
+	@echo "$(BLUE)下载嵌入模型...$(NC)"
+	ollama pull nomic-embed-text
+	@echo "$(GREEN)✓ 嵌入模型下载完成$(NC)"
 
 .PHONY: ollama-status
 ollama-status: ## 查看 Ollama 状态

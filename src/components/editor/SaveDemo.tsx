@@ -131,7 +131,7 @@ export function SaveDemo() {
                   <div>
                     <h4 className="font-semibold text-sm">AI 提取元数据</h4>
                     <p className="text-xs text-cyan-400/60">
-                      使用 Ollama qwen2.5:7b 提取标题、分类、标签、摘要
+                      使用 Ollama gemma4:e2b 提取标题、分类、标签、摘要
                     </p>
                   </div>
                 </div>
@@ -220,7 +220,7 @@ export function SaveDemo() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Zap className="w-4 h-4 text-cyan-400" />
-                  <span className="text-sm">Ollama (qwen2.5:7b)</span>
+                  <span className="text-sm">Ollama (gemma4:e2b)</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Tag className="w-4 h-4 text-cyan-400" />
@@ -291,7 +291,7 @@ export function SaveDemo() {
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="w-4 h-4 mt-0.5 text-green-400" />
-                  <span>已下载 qwen2.5:7b 模型</span>
+                  <span>已下载 gemma4:e2b 模型</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="w-4 h-4 mt-0.5 text-green-400" />

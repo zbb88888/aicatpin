@@ -50,7 +50,7 @@ export interface UseCatPinSaveReturn {
 // ============================================================
 
 const OLLAMA_BASE_URL = 'http://127.0.0.1:11434'
-const OLLAMA_MODEL = 'qwen2.5:7b'
+const OLLAMA_MODEL = 'gemma4:e2b'
 const EMBEDDING_MODEL = 'nomic-embed-text'
 const EMBEDDING_DIMENSION = 1024
 

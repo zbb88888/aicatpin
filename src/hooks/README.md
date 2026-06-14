@@ -7,7 +7,7 @@
 ## 功能特性
 
 ### 1. AI 元数据提取
-- 使用 Ollama qwen2.5:7b 模型
+- 使用 Ollama gemma4:e2b 模型
 - 自动提取：标题、分类、标签、摘要
 - 支持 JSON 格式输出
 
@@ -222,7 +222,7 @@ console.warn('笔记已保存到数据库，但文件同步失败')
 
 ### Ollama 模型
 ```typescript
-const OLLAMA_MODEL = 'qwen2.5:7b'      // 元数据提取模型
+const OLLAMA_MODEL = 'gemma4:e2b'      // 元数据提取模型
 const EMBEDDING_MODEL = 'nomic-embed-text' // 嵌入模型
 const EMBEDDING_DIMENSION = 1024         // 向量维度
 ```
