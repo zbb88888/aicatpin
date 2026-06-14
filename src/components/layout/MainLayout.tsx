@@ -450,7 +450,7 @@ export function MainLayout() {
             {/* 标题输入 */}
             <input
               type="text"
-              placeholder="无标题主题"
+              placeholder="请输入主题"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               className="w-full text-2xl font-bold bg-transparent text-zinc-100 placeholder-zinc-700 focus:outline-none mb-4"
