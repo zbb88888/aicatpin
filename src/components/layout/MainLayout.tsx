@@ -7,10 +7,12 @@ import {
   ChevronRight, 
   Plus, 
   Search, 
-  Hash,
   Sparkles,
   Network,
-  X
+  X,
+  HelpCircle,
+  Folder,
+  Hash
 } from 'lucide-react'
 
 // ============================================================
@@ -39,43 +41,110 @@ function StatusIndicator({ status, progress }: { status: SaveStatus; progress: s
 }
 
 // ============================================================
-// 左侧搜索组件（极简版）
+// 帮助面板组件
+// ============================================================
+
+function HelpPanel({ onClose }: { onClose: () => void }) {
+  const commands = [
+    { cmd: '/class', desc: '搜索分类', example: '/class Networking' },
+    { cmd: '/label', desc: '搜索标签', example: '/label rust' },
+    { cmd: '/h', desc: '显示帮助', example: '/h' },
+  ]
+
+  const shortcuts = [
+    { key: 'Ctrl+K', desc: '聚焦搜索框' },
+    { key: 'Ctrl+\\', desc: '切换侧边栏' },
+    { key: 'Ctrl+Shift+A', desc: '打开 AI 面板' },
+    { key: 'Ctrl+S', desc: '保存笔记' },
+  ]
+
+  return (
+    <div className="absolute left-0 right-0 top-full mt-1 bg-zinc-900/95 border border-zinc-800/50 rounded-lg shadow-xl z-50 backdrop-blur-sm">
+      <div className="p-3">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-xs font-medium text-zinc-300">帮助命令</h3>
+          <button 
+            onClick={onClose}
+            className="p-0.5 hover:bg-zinc-800/50 rounded"
+          >
+            <X className="w-3 h-3 text-zinc-500" />
+          </button>
+        </div>
+
+        {/* 命令列表 */}
+        <div className="space-y-2 mb-4">
+          <h4 className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">
+            斜杠命令
+          </h4>
+          {commands.map((cmd) => (
+            <div key={cmd.cmd} className="flex items-center gap-2">
+              <code className="px-1.5 py-0.5 text-[10px] text-cyan-400 bg-cyan-500/10 rounded font-mono">
+                {cmd.cmd}
+              </code>
+              <span className="text-xs text-zinc-400">{cmd.desc}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* 快捷键列表 */}
+        <div className="space-y-2">
+          <h4 className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">
+            快捷键
+          </h4>
+          {shortcuts.map((shortcut) => (
+            <div key={shortcut.key} className="flex items-center justify-between">
+              <kbd className="px-1.5 py-0.5 text-[10px] text-zinc-400 bg-zinc-800/50 rounded font-mono">
+                {shortcut.key}
+              </kbd>
+              <span className="text-xs text-zinc-500">{shortcut.desc}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ============================================================
+// 左侧搜索组件（单命令框）
 // ============================================================
 
 function Sidebar({ 
   isCollapsed, 
-  onToggle,
-  selectedCategory,
-  onSelectCategory,
-  selectedTags,
-  onToggleTag
+  onToggle
 }: { 
   isCollapsed: boolean
   onToggle: () => void
-  selectedCategory: string
-  onSelectCategory: (id: string) => void
-  selectedTags: string[]
-  onToggleTag: (tag: string) => void
 }) {
-  const [categoryQuery, setCategoryQuery] = useState('')
-  const [tagQuery, setTagQuery] = useState('')
-  const [categoryFocused, setCategoryFocused] = useState(false)
-  const [tagFocused, setTagFocused] = useState(false)
-  const categoryInputRef = useRef<HTMLInputElement>(null)
-  const tagInputRef = useRef<HTMLInputElement>(null)
+  const [query, setQuery] = useState('')
+  const [focused, setFocused] = useState(false)
+  const [showHelp, setShowHelp] = useState(false)
+  const [commandMode, setCommandMode] = useState<'none' | 'class' | 'label' | 'help'>('none')
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  // 解析命令
+  useEffect(() => {
+    const trimmed = query.trim()
+    if (trimmed.startsWith('/class')) {
+      setCommandMode('class')
+    } else if (trimmed.startsWith('/label')) {
+      setCommandMode('label')
+    } else if (trimmed.startsWith('/h')) {
+      setCommandMode('help')
+      setShowHelp(true)
+    } else {
+      setCommandMode('none')
+      setShowHelp(false)
+    }
+  }, [query])
 
   // 快捷键聚焦搜索框
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Ctrl+K: 聚焦分类搜索
+      // Ctrl+K: 聚焦搜索框
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault()
-        categoryInputRef.current?.focus()
-      }
-      // Ctrl+L: 聚焦标签搜索
-      if ((e.metaKey || e.ctrlKey) && e.key === 'l') {
-        e.preventDefault()
-        tagInputRef.current?.focus()
+        inputRef.current?.focus()
       }
     }
 
@@ -83,10 +152,53 @@ function Sidebar({
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [])
 
+  // 获取占位符文本
+  const getPlaceholder = () => {
+    switch (commandMode) {
+      case 'class':
+        return '输入分类名称...'
+      case 'label':
+        return '输入标签名称...'
+      case 'help':
+        return '显示帮助中...'
+      default:
+        return '输入 / 查看命令...'
+    }
+  }
+
+  // 获取命令提示
+  const getCommandHint = () => {
+    switch (commandMode) {
+      case 'class':
+        return (
+          <div className="flex items-center gap-1.5 mt-1">
+            <Folder className="w-3 h-3 text-cyan-400" />
+            <span className="text-[10px] text-cyan-400">搜索分类模式</span>
+          </div>
+        )
+      case 'label':
+        return (
+          <div className="flex items-center gap-1.5 mt-1">
+            <Hash className="w-3 h-3 text-cyan-400" />
+            <span className="text-[10px] text-cyan-400">搜索标签模式</span>
+          </div>
+        )
+      case 'help':
+        return (
+          <div className="flex items-center gap-1.5 mt-1">
+            <HelpCircle className="w-3 h-3 text-cyan-400" />
+            <span className="text-[10px] text-cyan-400">帮助模式</span>
+          </div>
+        )
+      default:
+        return null
+    }
+  }
+
   return (
     <aside 
       className={cn(
-        'h-full flex flex-col transition-all duration-300',
+        'h-full flex flex-col transition-all duration-300 relative',
         isCollapsed ? 'w-0 overflow-hidden' : 'w-56'
       )}
     >
@@ -106,59 +218,36 @@ function Sidebar({
         </button>
       </div>
 
-      {/* 搜索区域 */}
-      <div className="flex-1 px-3 space-y-3">
-        {/* 分类搜索 */}
-        <div>
-          <div className="relative">
-            <Search className="absolute left-2 top-2 h-3 w-3 text-zinc-600" />
-            <input
-              ref={categoryInputRef}
-              type="text"
-              placeholder="搜索分类 (Ctrl+K)"
-              value={categoryQuery}
-              onChange={(e) => setCategoryQuery(e.target.value)}
-              onFocus={() => setCategoryFocused(true)}
-              onBlur={() => setTimeout(() => setCategoryFocused(false), 200)}
-              className="w-full pl-7 pr-2 py-1.5 text-xs bg-zinc-900/30 text-zinc-300 placeholder-zinc-700 focus:outline-none focus:bg-zinc-900/50 rounded"
-            />
-          </div>
-          
-          {/* 激活状态提示 */}
-          {categoryFocused && (
-            <div className="mt-2 px-2 py-1.5 text-[10px] text-zinc-600 bg-zinc-900/20 rounded">
-              输入字符以检索数据库...
-            </div>
-          )}
+      {/* 命令搜索框 */}
+      <div className="px-3 relative">
+        <div className="relative">
+          <Search className="absolute left-2 top-2 h-3 w-3 text-zinc-600" />
+          <input
+            ref={inputRef}
+            type="text"
+            placeholder={getPlaceholder()}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onFocus={() => setFocused(true)}
+            onBlur={() => setTimeout(() => setFocused(false), 200)}
+            className="w-full pl-7 pr-2 py-1.5 text-xs bg-zinc-900/30 text-zinc-300 placeholder-zinc-700 focus:outline-none focus:bg-zinc-900/50 rounded"
+          />
         </div>
+        
+        {/* 命令提示 */}
+        {getCommandHint()}
 
-        {/* 标签搜索 */}
-        <div>
-          <div className="relative">
-            <Hash className="absolute left-2 top-2 h-3 w-3 text-zinc-600" />
-            <input
-              ref={tagInputRef}
-              type="text"
-              placeholder="搜索标签 (Ctrl+L)"
-              value={tagQuery}
-              onChange={(e) => setTagQuery(e.target.value)}
-              onFocus={() => setTagFocused(true)}
-              onBlur={() => setTimeout(() => setTagFocused(false), 200)}
-              className="w-full pl-7 pr-2 py-1.5 text-xs bg-zinc-900/30 text-zinc-300 placeholder-zinc-700 focus:outline-none focus:bg-zinc-900/50 rounded"
-            />
-          </div>
-          
-          {/* 激活状态提示 */}
-          {tagFocused && (
-            <div className="mt-2 px-2 py-1.5 text-[10px] text-zinc-600 bg-zinc-900/20 rounded">
-              输入字符以检索数据库...
-            </div>
-          )}
-        </div>
-
-        {/* 干净的留白区域 */}
-        <div className="flex-1" />
+        {/* 帮助面板 */}
+        {showHelp && (
+          <HelpPanel onClose={() => {
+            setShowHelp(false)
+            setQuery('')
+          }} />
+        )}
       </div>
+
+      {/* 干净的留白区域 */}
+      <div className="flex-1" />
 
       {/* 底部操作 */}
       <div className="p-3">
@@ -264,8 +353,6 @@ function AIPanel({
 export function MainLayout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [aiPanelOpen, setAiPanelOpen] = useState(false)
-  const [selectedCategory] = useState('programming')
-  const [selectedTags] = useState<string[]>([])
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   
@@ -291,21 +378,12 @@ export function MainLayout() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [])
 
-  // 切换标签（保留函数签名但简化实现）
-  const handleToggleTag = (tag: string) => {
-    console.log('Toggle tag:', tag)
-  }
-
   return (
     <div className="flex h-screen w-screen bg-zinc-950 text-zinc-200 font-sans antialiased selection:bg-cyan-500/20">
-      {/* 左侧搜索栏 */}
+      {/* 左侧命令中心 */}
       <Sidebar
         isCollapsed={sidebarCollapsed}
         onToggle={() => setSidebarCollapsed(prev => !prev)}
-        selectedCategory={selectedCategory}
-        onSelectCategory={() => {}}
-        selectedTags={selectedTags}
-        onToggleTag={handleToggleTag}
       />
 
       {/* 中间主内容区 */}
@@ -361,27 +439,6 @@ export function MainLayout() {
               onChange={(e) => setTitle(e.target.value)}
               className="w-full text-2xl font-bold bg-transparent text-zinc-100 placeholder-zinc-700 focus:outline-none mb-4"
             />
-
-            {/* 标签 - 竖向排列 */}
-            {selectedTags.length > 0 && (
-              <div className="flex flex-col items-start gap-1.5 mb-8">
-                {selectedTags.map((tag) => (
-                  <div
-                    key={tag}
-                    className="flex items-center gap-1.5 group"
-                  >
-                    <span className="text-xs text-zinc-600">#</span>
-                    <span className="text-xs text-zinc-400">{tag}</span>
-                    <button
-                      onClick={() => handleToggleTag(tag)}
-                      className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-zinc-800/50 rounded transition-all"
-                    >
-                      <X className="w-2.5 h-2.5 text-zinc-600" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
 
             {/* TipTap 编辑器 */}
             <CatPinEditor
