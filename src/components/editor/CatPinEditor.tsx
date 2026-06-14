@@ -29,14 +29,8 @@ interface CatPinEditorProps {
 }
 
 export const CatPinEditor = forwardRef<CatPinEditorRef, CatPinEditorProps>(function CatPinEditor({
-  content = '',
-  onChange,
-  placeholder = '开始记录...',
-  autoFocus = true,
-  editable = true,
-  className,
-  height = '100%',
-  onArrowUpAtTop,
+  content = '', onChange, placeholder = '开始记录...', autoFocus = true, editable = true,
+  className, height = '100%', onArrowUpAtTop,
 }, ref) {
   const editor = useEditor({
     extensions: [
@@ -46,9 +40,7 @@ export const CatPinEditor = forwardRef<CatPinEditorRef, CatPinEditorProps>(funct
       Markdown.configure({ html: false, transformPastedText: true, transformCopiedText: false }),
       AIBlock,
     ],
-    content,
-    editable,
-    autofocus: autoFocus,
+    content, editable, autofocus: autoFocus,
     onUpdate: ({ editor }) => onChange?.(editor.storage.markdown.getMarkdown()),
     editorProps: { attributes: { class: 'focus:outline-none' } },
   })
@@ -87,38 +79,27 @@ export const CatPinEditor = forwardRef<CatPinEditorRef, CatPinEditorProps>(funct
     return () => document.removeEventListener('keydown', handler)
   }, [editor])
 
-  if (!editor) return <div className="flex items-center justify-center h-32"><div className="text-mung-muted text-sm">加载中...</div></div>
+  if (!editor) return <div className="flex items-center justify-center h-32 text-mung-muted text-sm">加载中...</div>
 
   return (
     <div className={cn('flex flex-col', className)} style={{ height }}>
       <div className="flex-1 overflow-y-auto">
-        <EditorContent
-          editor={editor}
-          className={cn(
-            'prose max-w-none',
-            '[&_h1]:text-4xl [&_h1]:font-extrabold [&_h1]:tracking-tight [&_h1]:text-mung-text [&_h1]:mb-8',
-            '[&_h2]:text-2xl [&_h2]:font-semibold [&_h2]:text-mung-text [&_h2]:mt-10 [&_h2]:pb-2 [&_h2]:border-b [&_h2]:border-mung-border',
-            '[&_h3]:text-xl [&_h3]:text-mung-text [&_h3]:mt-8 [&_h3]:mb-4',
-            '[&_h4]:text-lg [&_h4]:font-medium [&_h4]:text-mung-text [&_h4]:mt-6 [&_h4]:mb-3',
-            '[&_h5]:text-base [&_h5]:font-medium [&_h5]:text-mung-text [&_h5]:mt-4 [&_h5]:mb-2',
-            '[&_h6]:text-sm [&_h6]:font-medium [&_h6]:text-mung-text [&_h6]:mt-4 [&_h6]:mb-2',
-            '[&_p]:text-mung-text [&_p]:leading-relaxed [&_p]:mb-6',
-            '[&_strong]:text-[#1A261B] [&_strong]:font-bold',
-            '[&_em]:text-mung-muted',
-            '[&_code]:text-emerald-700 [&_code]:bg-mung-border/30 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-sm [&_code]:before:content-none [&_code]:after:content-none',
-            '[&_pre]:bg-mung-border/20 [&_pre]:border [&_pre]:border-mung-border [&_pre]:rounded-lg [&_pre]:p-4',
-            '[&_pre_code]:bg-transparent [&_pre_code]:text-mung-text',
-            '[&_blockquote]:border-l-2 [&_blockquote]:border-mung-border [&_blockquote]:pl-4 [&_blockquote]:text-mung-muted [&_blockquote]:italic',
-            '[&_ul]:text-mung-text [&_ol]:text-mung-text [&_li]:text-mung-text [&_li]:mb-1',
-            '[&_a]:text-emerald-700 [&_a]:no-underline hover:[&_a]:underline',
-            '[&_hr]:border-mung-border [&_hr]:my-8',
-            '[&_img]:rounded-lg [&_img]:border [&_img]:border-mung-border',
-            '[&_table]:border-collapse',
-            '[&_th]:border [&_th]:border-mung-border [&_th]:px-3 [&_th]:py-2 [&_th]:bg-mung-border/20 [&_th]:text-mung-text [&_th]:font-medium',
-            '[&_td]:border [&_td]:border-mung-border [&_td]:px-3 [&_td]:py-2',
-            '[&_.is-editor-empty:first-child::before]:content-[attr(data-placeholder)] [&_.is-editor-empty:first-child::before]:text-mung-muted [&_.is-editor-empty:first-child::before]:float-left [&_.is-editor-empty:first-child::before]:h-0 [&_.is-editor-empty:first-child::before]:pointer-events-none',
-          )}
-        />
+        <EditorContent editor={editor} className={cn(
+          'prose max-w-none',
+          '[&_h1]:text-4xl [&_h1]:font-extrabold [&_h1]:tracking-tight [&_h1]:text-mung-text [&_h1]:mb-8',
+          '[&_h2]:text-2xl [&_h2]:font-semibold [&_h2]:text-mung-text [&_h2]:mt-10 [&_h2]:pb-2 [&_h2]:border-b [&_h2]:border-mung-border',
+          '[&_h3]:text-xl [&_h3]:text-mung-text [&_h3]:mt-8 [&_h3]:mb-4',
+          '[&_p]:text-mung-text [&_p]:leading-relaxed [&_p]:mb-6',
+          '[&_strong]:text-[#1A261B] [&_strong]:font-bold',
+          '[&_em]:text-mung-muted',
+          '[&_code]:text-emerald-700 [&_code]:bg-mung-border/30 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-sm [&_code]:before:content-none [&_code]:after:content-none',
+          '[&_pre]:bg-mung-border/20 [&_pre]:border [&_pre]:border-mung-border [&_pre]:rounded-lg [&_pre]:p-4 [&_pre_code]:bg-transparent [&_pre_code]:text-mung-text',
+          '[&_blockquote]:border-l-2 [&_blockquote]:border-mung-border [&_blockquote]:pl-4 [&_blockquote]:text-mung-muted [&_blockquote]:italic',
+          '[&_ul]:text-mung-text [&_ol]:text-mung-text [&_li]:text-mung-text [&_li]:mb-1',
+          '[&_a]:text-emerald-700 [&_a]:no-underline hover:[&_a]:underline',
+          '[&_hr]:border-mung-border [&_hr]:my-8',
+          '[&_.is-editor-empty:first-child::before]:content-[attr(data-placeholder)] [&_.is-editor-empty:first-child::before]:text-mung-muted [&_.is-editor-empty:first-child::before]:float-left [&_.is-editor-empty:first-child::before]:h-0 [&_.is-editor-empty:first-child::before]:pointer-events-none',
+        )} />
       </div>
     </div>
   )
