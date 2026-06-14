@@ -428,10 +428,10 @@ export function MainLayout() {
               <span className="text-xs font-medium text-zinc-400 tracking-wider">AICATPIN</span>
             </div>
             
-            {/* 扁平路径 */}
+            {/* 扁平路径 - 等待真实数据 */}
             <div className="flex items-center gap-1.5">
               <span className="text-zinc-500">/</span>
-              <span className="text-zinc-400">Programming</span>
+              <span className="text-zinc-600 italic">未分类</span>
             </div>
           </div>
           
