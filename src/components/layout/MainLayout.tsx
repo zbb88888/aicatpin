@@ -8,53 +8,10 @@ import {
   Plus, 
   Search, 
   Hash,
-  Folder,
   Sparkles,
   Network,
   X
 } from 'lucide-react'
-
-// ============================================================
-// 类型定义
-// ============================================================
-
-interface Category {
-  id: string
-  name: string
-}
-
-interface Tag {
-  name: string
-  count: number
-}
-
-// ============================================================
-// 模拟数据
-// ============================================================
-
-const allCategories: Category[] = [
-  { id: 'networking', name: 'Networking' },
-  { id: 'kernel', name: 'Kernel' },
-  { id: 'database', name: 'Database' },
-  { id: 'systems', name: 'Systems' },
-  { id: 'security', name: 'Security' },
-  { id: 'programming', name: 'Programming' },
-  { id: 'devops', name: 'DevOps' },
-  { id: 'ai', name: 'AI' },
-]
-
-const allTags: Tag[] = [
-  { name: 'rust', count: 45 },
-  { name: 'linux', count: 38 },
-  { name: 'tcp/ip', count: 29 },
-  { name: 'security', count: 27 },
-  { name: 'database', count: 24 },
-  { name: 'performance', count: 22 },
-  { name: 'networking', count: 20 },
-  { name: 'kernel', count: 18 },
-  { name: 'ebpf', count: 15 },
-  { name: 'cilium', count: 12 },
-]
 
 // ============================================================
 // 状态指示器组件
@@ -82,7 +39,7 @@ function StatusIndicator({ status, progress }: { status: SaveStatus; progress: s
 }
 
 // ============================================================
-// 左侧搜索组件
+// 左侧搜索组件（极简版）
 // ============================================================
 
 function Sidebar({ 
@@ -102,18 +59,10 @@ function Sidebar({
 }) {
   const [categoryQuery, setCategoryQuery] = useState('')
   const [tagQuery, setTagQuery] = useState('')
+  const [categoryFocused, setCategoryFocused] = useState(false)
+  const [tagFocused, setTagFocused] = useState(false)
   const categoryInputRef = useRef<HTMLInputElement>(null)
   const tagInputRef = useRef<HTMLInputElement>(null)
-
-  // 过滤分类
-  const filteredCategories = allCategories.filter(cat => 
-    cat.name.toLowerCase().includes(categoryQuery.toLowerCase())
-  )
-
-  // 过滤标签
-  const filteredTags = allTags.filter(tag => 
-    tag.name.toLowerCase().includes(tagQuery.toLowerCase())
-  )
 
   // 快捷键聚焦搜索框
   useEffect(() => {
@@ -137,7 +86,7 @@ function Sidebar({
   return (
     <aside 
       className={cn(
-        'h-full border-r border-zinc-800/30 bg-zinc-950/80 flex flex-col transition-all duration-300',
+        'h-full flex flex-col transition-all duration-300',
         isCollapsed ? 'w-0 overflow-hidden' : 'w-56'
       )}
     >
@@ -158,10 +107,10 @@ function Sidebar({
       </div>
 
       {/* 搜索区域 */}
-      <div className="flex-1 overflow-y-auto px-3 space-y-4">
+      <div className="flex-1 px-3 space-y-3">
         {/* 分类搜索 */}
         <div>
-          <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center justify-between mb-1.5">
             <span className="text-[10px] font-medium text-zinc-600 uppercase tracking-wider">
               分类
             </span>
@@ -170,7 +119,7 @@ function Sidebar({
             </kbd>
           </div>
           
-          <div className="relative mb-2">
+          <div className="relative">
             <Search className="absolute left-2 top-2 h-3 w-3 text-zinc-600" />
             <input
               ref={categoryInputRef}
@@ -178,32 +127,23 @@ function Sidebar({
               placeholder="搜索分类..."
               value={categoryQuery}
               onChange={(e) => setCategoryQuery(e.target.value)}
+              onFocus={() => setCategoryFocused(true)}
+              onBlur={() => setTimeout(() => setCategoryFocused(false), 200)}
               className="w-full pl-7 pr-2 py-1.5 text-xs bg-zinc-900/30 text-zinc-300 placeholder-zinc-700 focus:outline-none focus:bg-zinc-900/50 rounded"
             />
           </div>
           
-          <div className="space-y-0.5">
-            {filteredCategories.map((category) => (
-              <button
-                key={category.id}
-                onClick={() => onSelectCategory(category.id)}
-                className={cn(
-                  'w-full flex items-center gap-2 px-2 py-1 rounded text-xs transition-colors',
-                  selectedCategory === category.id
-                    ? 'bg-zinc-800/50 text-zinc-200'
-                    : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900/30'
-                )}
-              >
-                <Folder className="w-3 h-3" />
-                <span>{category.name}</span>
-              </button>
-            ))}
-          </div>
+          {/* 激活状态提示 */}
+          {categoryFocused && (
+            <div className="mt-2 px-2 py-1.5 text-[10px] text-zinc-600 bg-zinc-900/20 rounded">
+              输入字符以检索数据库...
+            </div>
+          )}
         </div>
 
         {/* 标签搜索 */}
         <div>
-          <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center justify-between mb-1.5">
             <span className="text-[10px] font-medium text-zinc-600 uppercase tracking-wider">
               标签
             </span>
@@ -212,7 +152,7 @@ function Sidebar({
             </kbd>
           </div>
           
-          <div className="relative mb-2">
+          <div className="relative">
             <Hash className="absolute left-2 top-2 h-3 w-3 text-zinc-600" />
             <input
               ref={tagInputRef}
@@ -220,35 +160,26 @@ function Sidebar({
               placeholder="搜索标签..."
               value={tagQuery}
               onChange={(e) => setTagQuery(e.target.value)}
+              onFocus={() => setTagFocused(true)}
+              onBlur={() => setTimeout(() => setTagFocused(false), 200)}
               className="w-full pl-7 pr-2 py-1.5 text-xs bg-zinc-900/30 text-zinc-300 placeholder-zinc-700 focus:outline-none focus:bg-zinc-900/50 rounded"
             />
           </div>
           
-          <div className="space-y-0.5">
-            {filteredTags.map((tag) => (
-              <button
-                key={tag.name}
-                onClick={() => onToggleTag(tag.name)}
-                className={cn(
-                  'w-full flex items-center justify-between px-2 py-1 rounded text-xs transition-colors',
-                  selectedTags.includes(tag.name)
-                    ? 'bg-zinc-800/50 text-zinc-200'
-                    : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900/30'
-                )}
-              >
-                <div className="flex items-center gap-2">
-                  <Hash className="w-3 h-3" />
-                  <span>{tag.name}</span>
-                </div>
-                <span className="text-zinc-700">{tag.count}</span>
-              </button>
-            ))}
-          </div>
+          {/* 激活状态提示 */}
+          {tagFocused && (
+            <div className="mt-2 px-2 py-1.5 text-[10px] text-zinc-600 bg-zinc-900/20 rounded">
+              输入字符以检索数据库...
+            </div>
+          )}
         </div>
+
+        {/* 干净的留白区域 */}
+        <div className="flex-1" />
       </div>
 
       {/* 底部操作 */}
-      <div className="p-3 border-t border-zinc-800/30">
+      <div className="p-3">
         <button className="w-full flex items-center justify-center gap-2 px-3 py-1.5 text-xs text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900/30 rounded transition-colors">
           <Plus className="w-3 h-3" />
           <span>新建笔记</span>
@@ -351,8 +282,8 @@ function AIPanel({
 export function MainLayout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [aiPanelOpen, setAiPanelOpen] = useState(false)
-  const [selectedCategory, setSelectedCategory] = useState('programming')
-  const [selectedTags, setSelectedTags] = useState<string[]>(['rust', 'systems'])
+  const [selectedCategory] = useState('programming')
+  const [selectedTags] = useState<string[]>(['rust', 'systems'])
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   
@@ -378,17 +309,10 @@ export function MainLayout() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [])
 
-  // 切换标签
+  // 切换标签（保留函数签名但简化实现）
   const handleToggleTag = (tag: string) => {
-    setSelectedTags(prev => 
-      prev.includes(tag) 
-        ? prev.filter(t => t !== tag)
-        : [...prev, tag]
-    )
+    console.log('Toggle tag:', tag)
   }
-
-  // 获取当前分类信息
-  const currentCategory = allCategories.find(c => c.id === selectedCategory)
 
   return (
     <div className="flex h-screen w-screen bg-zinc-950 text-zinc-200 font-sans antialiased selection:bg-cyan-500/20">
@@ -397,7 +321,7 @@ export function MainLayout() {
         isCollapsed={sidebarCollapsed}
         onToggle={() => setSidebarCollapsed(prev => !prev)}
         selectedCategory={selectedCategory}
-        onSelectCategory={setSelectedCategory}
+        onSelectCategory={() => {}}
         selectedTags={selectedTags}
         onToggleTag={handleToggleTag}
       />
@@ -420,7 +344,7 @@ export function MainLayout() {
             {/* 扁平路径 */}
             <div className="flex items-center gap-1.5">
               <span className="text-zinc-500">/</span>
-              <span className="text-zinc-400">{currentCategory?.name || 'Programming'}</span>
+              <span className="text-zinc-400">Programming</span>
             </div>
           </div>
           
