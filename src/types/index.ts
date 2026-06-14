@@ -1,16 +1,6 @@
 // AICatPin 类型定义
 
 /**
- * UUID 类型
- */
-export type UUID = string
-
-/**
- * ISO 8601 日期时间字符串
- */
-export type ISODateTime = string
-
-/**
  * 保存状态
  */
 export type SaveStatus = 'idle' | 'extracting' | 'embedding' | 'saving' | 'syncing' | 'success' | 'error'
@@ -28,7 +18,6 @@ export interface SaveResult {
     tags: string[]
     summary: string
   }
-  filePath?: string
 }
 
 /**
@@ -41,23 +30,6 @@ export interface Note {
   category: string
   tags: string[]
   summary?: string
-  embedding?: number[]
   created_at: string
   updated_at: string
-}
-
-/**
- * 分类统计
- */
-export interface CategoryStat {
-  category: string
-  count: number
-}
-
-/**
- * 标签统计
- */
-export interface TagStat {
-  tag: string
-  count: number
 }
