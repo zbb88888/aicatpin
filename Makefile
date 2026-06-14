@@ -108,7 +108,11 @@ install-frontend: ## 安装前端依赖
 .PHONY: install-backend
 install-backend: ## 安装后端依赖
 	@echo "$(BLUE)安装后端依赖...$(NC)"
-	cd $(BACKEND_DIR) && cargo fetch
+	@if command -v cargo >/dev/null 2>&1; then \
+		cd $(BACKEND_DIR) && cargo fetch; \
+	else \
+		echo "$(YELLOW)提示: cargo 未安装，跳过$(NC)"; \
+	fi
 	@echo "$(GREEN)✓ 后端依赖安装完成$(NC)"
 
 .PHONY: install-all
@@ -155,7 +159,11 @@ build-frontend: ## 构建前端
 .PHONY: build-backend
 build-backend: ## 构建后端（Tauri）
 	@echo "$(BLUE)构建后端...$(NC)"
-	cd $(BACKEND_DIR) && cargo build --release
+	@if command -v cargo >/dev/null 2>&1; then \
+		cd $(BACKEND_DIR) && cargo build --release; \
+	else \
+		echo "$(YELLOW)提示: cargo 未安装，跳过$(NC)"; \
+	fi
 	@echo "$(GREEN)✓ 后端构建完成$(NC)"
 
 .PHONY: build-tauri
@@ -219,7 +227,11 @@ test-frontend: ## 运行前端测试
 .PHONY: test-backend
 test-backend: ## 运行后端测试
 	@echo "$(BLUE)运行后端测试...$(NC)"
-	cd $(BACKEND_DIR) && cargo test
+	@if command -v cargo >/dev/null 2>&1; then \
+		cd $(BACKEND_DIR) && cargo test; \
+	else \
+		echo "$(YELLOW)提示: cargo 未安装，跳过$(NC)"; \
+	fi
 	@echo "$(GREEN)✓ 后端测试通过$(NC)"
 
 .PHONY: test-watch
@@ -341,7 +353,11 @@ clean-frontend: ## 清理前端构建文件
 .PHONY: clean-backend
 clean-backend: ## 清理后端构建文件
 	@echo "$(BLUE)清理后端构建文件...$(NC)"
-	cd $(BACKEND_DIR) && cargo clean
+	@if command -v cargo >/dev/null 2>&1; then \
+		cd $(BACKEND_DIR) && cargo clean; \
+	else \
+		echo "$(YELLOW)提示: cargo 未安装，跳过$(NC)"; \
+	fi
 	@echo "$(GREEN)✓ 后端构建文件已清理$(NC)"
 
 .PHONY: clean-deps
@@ -576,6 +592,14 @@ stop: db-stop ## 停止所有服务
 
 .PHONY: restart
 restart: stop start ## 重启所有服务
+
+.PHONY: rerun
+rerun: ## 重新运行开发服务器（停止+启动）
+	@echo "$(BLUE)重新启动开发服务器...$(NC)"
+	@pkill -f vite 2>/dev/null || true
+	@sleep 1
+	@echo "$(GREEN)✓ 开发服务器已重启$(NC)"
+	npm run dev
 
 .PHONY: update
 update: install build ## 更新依赖并构建
