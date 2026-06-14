@@ -8,9 +8,9 @@ FROM node:26-slim AS frontend-builder
 
 WORKDIR /app
 
-# 安装依赖
+# 安装依赖（使用 --legacy-peer-deps 解决依赖冲突）
 COPY package.json package-lock.json ./
-RUN npm ci --only=production
+RUN npm ci --legacy-peer-deps
 
 # 复制源代码
 COPY . .
@@ -25,9 +25,9 @@ FROM node:26-slim AS production
 
 WORKDIR /app
 
-# 安装生产依赖
+# 安装生产依赖（使用 --legacy-peer-deps 解决依赖冲突）
 COPY package.json package-lock.json ./
-RUN npm ci --only=production && npm cache clean --force
+RUN npm ci --legacy-peer-deps --only=production && npm cache clean --force
 
 # 复制构建产物
 COPY --from=frontend-builder /app/dist ./dist
@@ -51,9 +51,9 @@ FROM node:26-slim AS development
 
 WORKDIR /app
 
-# 安装依赖
+# 安装依赖（使用 --legacy-peer-deps 解决依赖冲突）
 COPY package.json package-lock.json ./
-RUN npm install
+RUN npm install --legacy-peer-deps
 
 # 复制源代码
 COPY . .
