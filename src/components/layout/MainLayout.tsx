@@ -1,341 +1,460 @@
-// React is used implicitly by JSX
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { Badge } from '@/components/ui/badge'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
+import React, { useState, useEffect } from 'react'
+import { cn } from '@/lib/utils'
+import { CatPinEditor } from '@/components/editor/CatPinEditor'
+import { useCatPinSave, SaveStatus } from '@/hooks/useCatPinSave'
 import { 
-  Search, 
+  ChevronLeft, 
+  ChevronRight, 
   Plus, 
-  Settings, 
-  Database, 
-  Cpu, 
-  Network, 
-  Shield, 
-  Code, 
-  Tag,
-  Folder,
+  Search, 
+  Settings,
   FileText,
-  Clock,
-  Star
+  Hash,
+  Folder,
+  Sparkles,
+  Network
 } from 'lucide-react'
 
-// 模拟数据 - 扁平分类
-const categories = [
-  { id: 'networking', name: 'Networking', icon: Network, count: 24 },
-  { id: 'kernel', name: 'Kernel', icon: Cpu, count: 18 },
-  { id: 'security', name: 'Security', icon: Shield, count: 15 },
-  { id: 'programming', name: 'Programming', icon: Code, count: 32 },
-  { id: 'database', name: 'Database', icon: Database, count: 12 },
-  { id: 'systems', name: 'Systems', icon: Settings, count: 21 },
+// ============================================================
+// 类型定义
+// ============================================================
+
+interface Category {
+  id: string
+  name: string
+  icon: React.ReactNode
+  count: number
+}
+
+interface Tag {
+  name: string
+  count: number
+}
+
+// ============================================================
+// 模拟数据
+// ============================================================
+
+const categories: Category[] = [
+  { id: 'networking', name: 'Networking', icon: <Network className="w-4 h-4" />, count: 24 },
+  { id: 'kernel', name: 'Kernel', icon: <Settings className="w-4 h-4" />, count: 18 },
+  { id: 'database', name: 'Database', icon: <Folder className="w-4 h-4" />, count: 15 },
+  { id: 'systems', name: 'Systems', icon: <FileText className="w-4 h-4" />, count: 21 },
+  { id: 'security', name: 'Security', icon: <Hash className="w-4 h-4" />, count: 12 },
+  { id: 'programming', name: 'Programming', icon: <Sparkles className="w-4 h-4" />, count: 32 },
 ]
 
-// 模拟数据 - 高频标签
-const popularTags = [
-  { name: 'rust', color: 'cyber', count: 45 },
-  { name: 'linux', color: 'cyber', count: 38 },
-  { name: 'tcp/ip', color: 'magenta', count: 29 },
-  { name: 'security', color: 'cyber', count: 27 },
-  { name: 'database', color: 'magenta', count: 24 },
-  { name: 'performance', color: 'cyber', count: 22 },
-  { name: 'networking', color: 'magenta', count: 20 },
-  { name: 'kernel', color: 'cyber', count: 18 },
-  { name: 'async', color: 'magenta', count: 16 },
-  { name: 'memory', color: 'cyber', count: 14 },
+const popularTags: Tag[] = [
+  { name: 'rust', count: 45 },
+  { name: 'linux', count: 38 },
+  { name: 'tcp/ip', count: 29 },
+  { name: 'security', count: 27 },
+  { name: 'database', count: 24 },
+  { name: 'performance', count: 22 },
+  { name: 'networking', count: 20 },
+  { name: 'kernel', count: 18 },
 ]
 
-// 模拟数据 - 最近笔记
-const recentNotes = [
-  { id: '1', title: 'TCP/IP 协议栈深度解析', category: 'Networking', tags: ['tcp/ip', 'networking'], updated: '2 小时前' },
-  { id: '2', title: 'Rust 内存安全机制', category: 'Programming', tags: ['rust', 'memory'], updated: '5 小时前' },
-  { id: '3', title: 'Linux 内核调度器', category: 'Kernel', tags: ['linux', 'kernel', 'performance'], updated: '1 天前' },
-  { id: '4', title: 'PostgreSQL 索引优化', category: 'Database', tags: ['database', 'performance'], updated: '2 天前' },
-]
+// ============================================================
+// 状态指示器组件
+// ============================================================
+
+function StatusIndicator({ status, progress }: { status: SaveStatus; progress: string }) {
+  const statusConfig = {
+    idle: { color: 'text-zinc-500', dot: 'bg-zinc-500', text: '已同步' },
+    extracting: { color: 'text-cyan-400', dot: 'bg-cyan-400 animate-pulse', text: 'AI 重构中...' },
+    embedding: { color: 'text-cyan-400', dot: 'bg-cyan-400 animate-pulse', text: '向量计算中...' },
+    saving: { color: 'text-cyan-400', dot: 'bg-cyan-400 animate-pulse', text: '持久化中...' },
+    syncing: { color: 'text-cyan-400', dot: 'bg-cyan-400 animate-pulse', text: '同步至文件系统...' },
+    success: { color: 'text-emerald-400', dot: 'bg-emerald-400', text: '已原子化落盘' },
+    error: { color: 'text-red-400', dot: 'bg-red-400', text: '保存失败' },
+  }
+
+  const config = statusConfig[status]
+
+  return (
+    <div className={cn('flex items-center gap-2 text-xs', config.color)}>
+      <span className={cn('h-1.5 w-1.5 rounded-full', config.dot)} />
+      <span>{progress || config.text}</span>
+    </div>
+  )
+}
+
+// ============================================================
+// 左侧导航组件
+// ============================================================
+
+function Sidebar({ 
+  isCollapsed, 
+  onToggle,
+  selectedCategory,
+  onSelectCategory 
+}: { 
+  isCollapsed: boolean
+  onToggle: () => void
+  selectedCategory: string
+  onSelectCategory: (id: string) => void
+}) {
+  const [searchQuery, setSearchQuery] = useState('')
+
+  const filteredCategories = categories.filter(cat => 
+    cat.name.toLowerCase().includes(searchQuery.toLowerCase())
+  )
+
+  return (
+    <aside 
+      className={cn(
+        'h-full border-r border-zinc-800/50 bg-zinc-950/80 flex flex-col transition-all duration-300',
+        isCollapsed ? 'w-0 overflow-hidden' : 'w-60'
+      )}
+    >
+      {/* Logo */}
+      <div className="p-4 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 rounded bg-zinc-800 flex items-center justify-center">
+            <Sparkles className="w-3.5 h-3.5 text-zinc-400" />
+          </div>
+          <span className="text-sm font-medium text-zinc-300">AICatPin</span>
+        </div>
+        <button 
+          onClick={onToggle}
+          className="p-1 hover:bg-zinc-800 rounded transition-colors"
+        >
+          <ChevronLeft className="w-4 h-4 text-zinc-500" />
+        </button>
+      </div>
+
+      {/* 搜索 */}
+      <div className="px-3 mb-2">
+        <div className="relative">
+          <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-zinc-500" />
+          <input
+            type="text"
+            placeholder="搜索分类..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-8 pr-3 py-2 text-xs bg-zinc-900/50 border border-zinc-800/50 rounded-md text-zinc-300 placeholder-zinc-600 focus:outline-none focus:border-zinc-700"
+          />
+        </div>
+      </div>
+
+      {/* 分类列表 */}
+      <div className="flex-1 overflow-y-auto px-3">
+        <div className="mb-2">
+          <div className="flex items-center justify-between px-2 mb-1">
+            <span className="text-[10px] font-medium text-zinc-600 uppercase tracking-wider">
+              Namespaces
+            </span>
+            <button className="p-0.5 hover:bg-zinc-800 rounded transition-colors">
+              <Plus className="w-3 h-3 text-zinc-500" />
+            </button>
+          </div>
+          
+          <div className="space-y-0.5">
+            {filteredCategories.map((category) => (
+              <button
+                key={category.id}
+                onClick={() => onSelectCategory(category.id)}
+                className={cn(
+                  'w-full flex items-center justify-between px-2 py-1.5 rounded text-sm transition-colors',
+                  selectedCategory === category.id
+                    ? 'bg-zinc-800/50 text-zinc-200'
+                    : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900/50'
+                )}
+              >
+                <div className="flex items-center gap-2">
+                  {category.icon}
+                  <span>{category.name}</span>
+                </div>
+                <span className="text-xs text-zinc-600">{category.count}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* 标签云 */}
+        <div className="mt-4">
+          <div className="flex items-center justify-between px-2 mb-2">
+            <span className="text-[10px] font-medium text-zinc-600 uppercase tracking-wider">
+              Tags
+            </span>
+          </div>
+          
+          <div className="flex flex-wrap gap-1.5 px-2">
+            {popularTags.map((tag) => (
+              <span
+                key={tag.name}
+                className="inline-flex items-center gap-1 px-2 py-0.5 text-xs text-zinc-500 bg-zinc-900/50 rounded hover:bg-zinc-800/50 hover:text-zinc-400 cursor-pointer transition-colors"
+              >
+                #{tag.name}
+                <span className="text-zinc-600">{tag.count}</span>
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* 底部操作 */}
+      <div className="p-3 border-t border-zinc-800/50">
+        <button className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs text-zinc-400 bg-zinc-900/50 rounded hover:bg-zinc-800/50 transition-colors">
+          <Plus className="w-3.5 h-3.5" />
+          <span>新建笔记</span>
+        </button>
+      </div>
+    </aside>
+  )
+}
+
+// ============================================================
+// 右侧 AI 面板组件
+// ============================================================
+
+function AIPanel({ 
+  isOpen, 
+  onClose,
+  status,
+  progress 
+}: { 
+  isOpen: boolean
+  onClose: () => void
+  status: SaveStatus
+  progress: string
+}) {
+  if (!isOpen) return null
+
+  return (
+    <aside className="w-80 h-full border-l border-zinc-800/50 bg-zinc-950/80 flex flex-col">
+      {/* 头部 */}
+      <div className="p-4 flex items-center justify-between border-b border-zinc-800/50">
+        <div className="flex items-center gap-2">
+          <Sparkles className="w-4 h-4 text-cyan-400" />
+          <span className="text-sm font-medium text-zinc-300">AI 协作</span>
+        </div>
+        <button 
+          onClick={onClose}
+          className="p-1 hover:bg-zinc-800 rounded transition-colors"
+        >
+          <ChevronRight className="w-4 h-4 text-zinc-500" />
+        </button>
+      </div>
+
+      {/* 内容 */}
+      <div className="flex-1 p-4 overflow-y-auto">
+        <div className="space-y-4">
+          {/* 状态卡片 */}
+          <div className="p-3 rounded-lg bg-zinc-900/50 border border-zinc-800/50">
+            <div className="flex items-center gap-2 mb-2">
+              <StatusIndicator status={status} progress={progress} />
+            </div>
+            <p className="text-xs text-zinc-500">
+              AI 正在分析您的笔记，提取关键信息并生成向量嵌入。
+            </p>
+          </div>
+
+          {/* 快捷操作 */}
+          <div className="space-y-2">
+            <h4 className="text-xs font-medium text-zinc-500 uppercase tracking-wider">
+              快捷操作
+            </h4>
+            <div className="space-y-1">
+              {[
+                { label: '生成摘要', shortcut: 'Ctrl+Shift+S' },
+                { label: '提取标签', shortcut: 'Ctrl+Shift+T' },
+                { label: '关联图谱', shortcut: 'Ctrl+Shift+G' },
+                { label: '语义搜索', shortcut: 'Ctrl+K' },
+              ].map((action) => (
+                <button
+                  key={action.label}
+                  className="w-full flex items-center justify-between px-3 py-2 text-sm text-zinc-400 hover:bg-zinc-800/50 rounded transition-colors"
+                >
+                  <span>{action.label}</span>
+                  <kbd className="px-1.5 py-0.5 text-[10px] text-zinc-600 bg-zinc-900 rounded">
+                    {action.shortcut}
+                  </kbd>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* 知识图谱预览 */}
+          <div className="space-y-2">
+            <h4 className="text-xs font-medium text-zinc-500 uppercase tracking-wider">
+              关联图谱
+            </h4>
+            <div className="h-40 rounded-lg bg-zinc-900/50 border border-zinc-800/50 flex items-center justify-center">
+              <div className="text-center">
+                <Network className="w-8 h-8 text-zinc-700 mx-auto mb-2" />
+                <p className="text-xs text-zinc-600">
+                  暂无关联数据
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+  )
+}
+
+// ============================================================
+// 主布局组件
+// ============================================================
 
 export function MainLayout() {
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [aiPanelOpen, setAiPanelOpen] = useState(false)
+  const [selectedCategory, setSelectedCategory] = useState('networking')
+  const [title, setTitle] = useState('')
+  const [content, setContent] = useState('')
+  const [tags] = useState<string[]>(['eBPF', 'Cilium'])
+  
+  const { status, progress } = useCatPinSave()
+
+  // 快捷键处理
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl+Shift+A: 打开 AI 面板
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'A') {
+        e.preventDefault()
+        setAiPanelOpen(prev => !prev)
+      }
+      
+      // Ctrl+\: 切换侧边栏
+      if ((e.metaKey || e.ctrlKey) && e.key === '\\') {
+        e.preventDefault()
+        setSidebarCollapsed(prev => !prev)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
+
+  // 获取当前分类信息
+  const currentCategory = categories.find(c => c.id === selectedCategory)
+
   return (
-    <div className="h-screen flex bg-background text-foreground cyber-gradient">
-      {/* 左栏 - 分类和标签 */}
-      <aside className="w-[250px] border-r border-cyan-500/20 flex flex-col bg-card/50 backdrop-blur-sm">
-        {/* Logo 区域 */}
-        <div className="p-4 border-b border-cyan-500/20">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-cyan-500/20 flex items-center justify-center">
-              <Cpu className="w-5 h-5 text-cyan-400" />
-            </div>
-            <div>
-              <h1 className="font-bold text-lg cyber-text">AICatPin</h1>
-              <p className="text-xs text-cyan-400/60">AI-Native Knowledge IDE</p>
-            </div>
-          </div>
-        </div>
+    <div className="flex h-screen w-screen bg-zinc-950 text-zinc-200 font-sans antialiased selection:bg-cyan-500/20">
+      {/* 左侧导航 */}
+      <Sidebar
+        isCollapsed={sidebarCollapsed}
+        onToggle={() => setSidebarCollapsed(prev => !prev)}
+        selectedCategory={selectedCategory}
+        onSelectCategory={setSelectedCategory}
+      />
 
-        {/* 搜索栏 */}
-        <div className="p-4 border-b border-cyan-500/20">
-          <div className="relative">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-cyan-400/60" />
-            <Input 
-              placeholder="搜索笔记..." 
-              className="pl-10 bg-cyan-500/5 border-cyan-500/30 focus:border-cyan-500/50 focus:ring-cyan-500/20"
-            />
-          </div>
-        </div>
-
-        {/* 分类列表 */}
-        <div className="flex-1 overflow-hidden">
-          <ScrollArea className="h-full">
-            <div className="p-4">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-sm font-semibold text-cyan-400/80 uppercase tracking-wider">
-                  Categories
-                </h2>
-                <Button variant="ghost" size="icon" className="h-6 w-6">
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
-              
-              <div className="space-y-1">
-                {categories.map((category) => (
-                  <div
-                    key={category.id}
-                    className="flex items-center justify-between p-2 rounded-lg hover:bg-cyan-500/10 transition-colors cursor-pointer group"
-                  >
-                    <div className="flex items-center gap-3">
-                      <category.icon className="w-4 h-4 text-cyan-400/60 group-hover:text-cyan-400 transition-colors" />
-                      <span className="text-sm">{category.name}</span>
-                    </div>
-                    <Badge variant="cyber" className="text-xs">
-                      {category.count}
-                    </Badge>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* 高频标签云 */}
-            <div className="p-4 border-t border-cyan-500/20">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-sm font-semibold text-cyan-400/80 uppercase tracking-wider">
-                  Popular Tags
-                </h2>
-                <Button variant="ghost" size="icon" className="h-6 w-6">
-                  <Tag className="h-4 w-4" />
-                </Button>
-              </div>
-              
-              <div className="flex flex-wrap gap-2">
-                {popularTags.map((tag) => (
-                  <Badge
-                    key={tag.name}
-                    variant={tag.color === 'cyber' ? 'cyber' : 'magenta'}
-                    className="cursor-pointer hover:scale-105 transition-transform"
-                  >
-                    {tag.name}
-                    <span className="ml-1 opacity-60">({tag.count})</span>
-                  </Badge>
-                ))}
-              </div>
-            </div>
-
-            {/* 最近笔记 */}
-            <div className="p-4 border-t border-cyan-500/20">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-sm font-semibold text-cyan-400/80 uppercase tracking-wider">
-                  Recent Notes
-                </h2>
-                <Button variant="ghost" size="icon" className="h-6 w-6">
-                  <Clock className="h-4 w-4" />
-                </Button>
-              </div>
-              
-              <div className="space-y-2">
-                {recentNotes.map((note) => (
-                  <div
-                    key={note.id}
-                    className="p-2 rounded-lg hover:bg-cyan-500/10 transition-colors cursor-pointer"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{note.title}</p>
-                        <p className="text-xs text-cyan-400/60 mt-1">
-                          {note.category} • {note.updated}
-                        </p>
-                      </div>
-                      <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100">
-                        <Star className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </ScrollArea>
-        </div>
-
-        {/* 底部操作栏 */}
-        <div className="p-4 border-t border-cyan-500/20">
-          <Button variant="cyber" className="w-full">
-            <Plus className="mr-2 h-4 w-4" />
-            新建笔记
-          </Button>
-        </div>
-      </aside>
-
-      {/* 中栏 - 编辑器主舞台 */}
-      <main className="flex-1 flex flex-col min-w-0">
-        {/* 顶部工具栏 */}
-        <header className="h-14 border-b border-cyan-500/20 flex items-center justify-between px-6 bg-card/30 backdrop-blur-sm">
+      {/* 中间主内容区 */}
+      <main className="flex-1 flex flex-col h-full bg-zinc-950 min-w-0">
+        {/* 顶部状态条 */}
+        <header className="h-11 border-b border-zinc-800/30 flex items-center justify-between px-6 text-xs text-zinc-500">
           <div className="flex items-center gap-4">
+            {/* 侧边栏切换按钮 */}
+            {sidebarCollapsed && (
+              <button 
+                onClick={() => setSidebarCollapsed(false)}
+                className="p-1 hover:bg-zinc-800 rounded transition-colors"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            )}
+            
+            {/* 面包屑导航 */}
             <div className="flex items-center gap-2">
-              <Folder className="w-4 h-4 text-cyan-400/60" />
-              <span className="text-sm text-cyan-400/80">Networking</span>
-            </div>
-            <span className="text-cyan-500/30">/</span>
-            <div className="flex items-center gap-2">
-              <FileText className="w-4 h-4 text-cyan-400/60" />
-              <span className="text-sm font-medium">TCP/IP 协议栈深度解析</span>
+              <span className="text-zinc-600">~/Vault</span>
+              <span className="text-zinc-700">/</span>
+              <span className="text-zinc-400">{currentCategory?.name || 'Networking'}</span>
             </div>
           </div>
           
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm">
-              <Settings className="w-4 h-4 mr-2" />
-              设置
-            </Button>
-            <Button variant="cyber" size="sm">
-              保存
-            </Button>
+          <div className="flex items-center gap-4">
+            {/* Ollama 状态 */}
+            <div className="flex items-center gap-2">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+              <span>Ollama 就绪</span>
+            </div>
+            
+            {/* AI 面板切换 */}
+            <button
+              onClick={() => setAiPanelOpen(prev => !prev)}
+              className={cn(
+                'p-1.5 rounded transition-colors',
+                aiPanelOpen ? 'bg-zinc-800 text-zinc-300' : 'hover:bg-zinc-800/50'
+              )}
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+            </button>
           </div>
         </header>
 
         {/* 编辑器区域 */}
-        <div className="flex-1 p-6 overflow-auto">
-          <div className="max-w-4xl mx-auto">
-            {/* 编辑器占位符 */}
-            <div className="min-h-[600px] border border-cyan-500/20 rounded-lg bg-card/50 backdrop-blur-sm p-8">
-              <div className="mb-8">
-                <h1 className="text-3xl font-bold cyber-text mb-4">
-                  TCP/IP 协议栈深度解析
-                </h1>
-                <div className="flex items-center gap-4 text-sm text-cyan-400/60">
-                  <span>创建于 2024-01-15</span>
-                  <span>•</span>
-                  <span>最后更新 2 小时前</span>
-                  <span>•</span>
-                  <span>字数 2,847</span>
-                </div>
-                <div className="flex gap-2 mt-4">
-                  <Badge variant="cyber">tcp/ip</Badge>
-                  <Badge variant="magenta">networking</Badge>
-                  <Badge variant="cyber">protocol</Badge>
-                </div>
-              </div>
-              
-              {/* 编辑器内容占位 */}
-              <div className="space-y-6 text-foreground/80">
-                <p>
-                  在现代网络通信中，TCP/IP 协议栈扮演着至关重要的角色。它是互联网的基础，
-                  定义了数据如何在网络中传输、路由和接收。
-                </p>
-                <h2 className="text-2xl font-semibold text-cyan-400 mt-8 mb-4">
-                  1. 协议栈概述
-                </h2>
-                <p>
-                  TCP/IP 协议栈通常分为四层：应用层、传输层、网络层和链路层。每一层都有
-                  其特定的功能和协议。
-                </p>
-                <div className="bg-cyan-500/5 border border-cyan-500/20 rounded-lg p-4 my-6">
-                  <p className="text-sm text-cyan-400/80">
-                    💡 提示：使用 TipTap 编辑器可以轻松创建这样的富文本内容块。
-                  </p>
-                </div>
-                <h2 className="text-2xl font-semibold text-cyan-400 mt-8 mb-4">
-                  2. 传输层协议
-                </h2>
-                <p>
-                  传输层主要包含两个协议：TCP（传输控制协议）和 UDP（用户数据报协议）。
-                  TCP 提供可靠的、面向连接的服务，而 UDP 则提供无连接的服务。
-                </p>
-                <div className="bg-cyan-500/5 border border-cyan-500/20 rounded-lg p-4 my-6">
-                  <pre className="text-sm font-mono text-cyan-300">
-{`// TCP 连接建立过程
-客户端 -> SYN -> 服务器
-客户端 <- SYN-ACK <- 服务器
-客户端 -> ACK -> 服务器`}
-                  </pre>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </main>
+        <div className="flex-1 overflow-y-auto">
+          <div className="max-w-3xl mx-auto px-8 py-10">
+            {/* 标题输入 */}
+            <input
+              type="text"
+              placeholder="无标题主题"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="w-full text-3xl font-bold bg-transparent text-zinc-100 placeholder-zinc-700 focus:outline-none mb-6"
+            />
 
-      {/* 右栏 - 知识图谱占位符 */}
-      <aside className="w-[300px] border-l border-cyan-500/20 flex flex-col bg-card/50 backdrop-blur-sm">
-        {/* 图谱标题 */}
-        <div className="p-4 border-b border-cyan-500/20">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-cyan-400/80 uppercase tracking-wider">
-              Knowledge Graph
-            </h2>
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon" className="h-6 w-6">
-                <Settings className="h-4 w-4" />
-              </Button>
-            </div>
+            {/* 标签 */}
+            {tags.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-6">
+                {tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="inline-flex items-center px-2.5 py-0.5 text-xs text-zinc-400 bg-zinc-900/50 rounded-full border border-zinc-800/50"
+                  >
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {/* TipTap 编辑器 */}
+            <CatPinEditor
+              content={content}
+              onChange={setContent}
+              placeholder="开始记录你的思维碎片，按下 Ctrl+S 让 AI 接管隐喻..."
+              height="auto"
+              className="border-0 bg-transparent"
+            />
           </div>
         </div>
 
-        {/* 图谱占位区域 */}
-        <div className="flex-1 p-4">
-          <div className="h-full border-2 border-dashed border-cyan-500/30 rounded-lg flex flex-col items-center justify-center bg-cyan-500/5">
-            <div className="text-center">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-cyan-500/10 flex items-center justify-center">
-                <Network className="w-8 h-8 text-cyan-400/60" />
-              </div>
-              <h3 className="text-lg font-semibold text-cyan-400/80 mb-2">
-                Knowledge Graph
-              </h3>
-              <p className="text-sm text-cyan-400/60 max-w-[200px] mx-auto">
-                可视化笔记之间的关联关系
-              </p>
-              <div className="mt-6 space-y-2">
-                <div className="flex items-center gap-2 text-xs text-cyan-400/40">
-                  <div className="w-2 h-2 rounded-full bg-cyan-400/30"></div>
-                  <span>节点: 笔记、概念、标签</span>
-                </div>
-                <div className="flex items-center gap-2 text-xs text-cyan-400/40">
-                  <div className="w-2 h-2 rounded-full bg-fuchsia-400/30"></div>
-                  <span>边: 引用、相似、关联</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* 图谱控制面板 */}
-        <div className="p-4 border-t border-cyan-500/20">
-          <div className="space-y-3">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-cyan-400/60">节点数量</span>
-              <span className="text-cyan-400">156</span>
-            </div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-cyan-400/60">连接数量</span>
-              <span className="text-cyan-400">342</span>
-            </div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-cyan-400/60">聚类系数</span>
-              <span className="text-cyan-400">0.73</span>
-            </div>
+        {/* 底部状态栏 */}
+        <footer className="h-10 px-6 border-t border-zinc-800/30 flex items-center justify-between text-xs text-zinc-600">
+          <div className="flex items-center gap-4">
+            <span>
+              字数: {content.replace(/<[^>]*>/g, '').length}
+            </span>
+            <span className="text-zinc-700">|</span>
+            <span>
+              词数: {content.replace(/<[^>]*>/g, '').split(/\s+/).filter(Boolean).length}
+            </span>
           </div>
           
-          <div className="mt-4">
-            <Button variant="cyberOutline" className="w-full" size="sm">
-              生成图谱
-            </Button>
+          <div className="flex items-center gap-4">
+            {tags.length > 0 && (
+              <span>
+                Tags: <span className="text-zinc-400">#{tags.join(' #')}</span>
+              </span>
+            )}
+            <StatusIndicator status={status} progress={progress} />
           </div>
-        </div>
-      </aside>
+        </footer>
+      </main>
+
+      {/* 右侧 AI 面板 */}
+      <AIPanel
+        isOpen={aiPanelOpen}
+        onClose={() => setAiPanelOpen(false)}
+        status={status}
+        progress={progress}
+      />
     </div>
   )
 }
+
+export default MainLayout

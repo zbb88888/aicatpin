@@ -1,7 +1,7 @@
-import { SaveDemo } from '@/components/editor/SaveDemo'
+import { MainLayout } from '@/components/layout/MainLayout'
 
 function App() {
-  return <SaveDemo />
+  return <MainLayout />
 }
 
 export default App

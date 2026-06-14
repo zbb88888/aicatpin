@@ -47,16 +47,7 @@ export function SaveDemo() {
     }
   }
 
-  // 保存成功回调
-  const handleSaveSuccess = (id: string) => {
-    console.log('保存成功:', id)
-    // 这里可以添加更多逻辑
-  }
-
-  // 保存失败回调
-  const handleSaveError = (error: string) => {
-    console.error('保存失败:', error)
-  }
+  // 保存回调已移除，使用默认行为
 
   return (
     <div className="container mx-auto p-6 space-y-6">
@@ -103,8 +94,6 @@ export function SaveDemo() {
             <CardContent>
               <div className="h-[500px]">
                 <CatPinEditor
-                  onSaveSuccess={handleSaveSuccess}
-                  onSaveError={handleSaveError}
                   placeholder="开始编辑内容，然后按 Ctrl+S 保存..."
                   height="100%"
                 />
