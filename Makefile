@@ -595,11 +595,7 @@ restart: stop start ## 重启所有服务
 
 .PHONY: rerun
 rerun: ## 重新运行开发服务器（停止+启动）
-	@echo "$(BLUE)重新启动开发服务器...$(NC)"
-	@pkill -f vite 2>/dev/null || true
-	@sleep 1
-	@echo "$(GREEN)✓ 开发服务器已重启$(NC)"
-	npm run dev
+	@./rerun.sh
 
 .PHONY: update
 update: install build ## 更新依赖并构建
