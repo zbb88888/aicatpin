@@ -7,12 +7,6 @@ import { Sparkles, Code, FileText, Zap } from 'lucide-react'
 
 export function EditorDemo() {
   const [content, setContent] = useState<string>('')
-  const [savedContent, setSavedContent] = useState<string>('')
-
-  const handleSave = (content: string) => {
-    setSavedContent(content)
-    console.log('保存内容:', content)
-  }
 
   const sampleContent = `
 <h1>CatPin Editor 演示</h1>
@@ -102,7 +96,6 @@ export function EditorDemo() {
                 <CatPinEditor
                   content={content}
                   onChange={setContent}
-                  onSave={handleSave}
                   placeholder="开始编辑，或输入 / 打开命令菜单..."
                   height="100%"
                 />
@@ -193,24 +186,6 @@ export function EditorDemo() {
               </div>
             </CardContent>
           </Card>
-
-          {/* 保存的内容预览 */}
-          {savedContent && (
-            <Card className="border-cyan-500/20 bg-card/50 backdrop-blur-sm">
-              <CardHeader>
-                <CardTitle className="text-lg text-cyan-400">
-                  保存的内容
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="p-3 rounded bg-cyan-500/5 border border-cyan-500/10 max-h-40 overflow-auto">
-                  <pre className="text-xs text-cyan-400/60 whitespace-pre-wrap break-words">
-                    {savedContent}
-                  </pre>
-                </div>
-              </CardContent>
-            </Card>
-          )}
         </div>
       </div>
 

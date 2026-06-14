@@ -1,7 +1,7 @@
-import { EditorDemo } from '@/components/editor/EditorDemo'
+import { SaveDemo } from '@/components/editor/SaveDemo'
 
 function App() {
-  return <EditorDemo />
+  return <SaveDemo />
 }
 
 export default App

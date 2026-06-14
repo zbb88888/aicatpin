@@ -7,6 +7,7 @@ import { common, createLowlight } from 'lowlight'
 import { cn } from '@/lib/utils'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { 
   Bold, 
   Italic, 
@@ -22,11 +23,18 @@ import {
   Undo,
   Redo,
   Save,
-  Sparkles
+  Sparkles,
+  Loader2,
+  CheckCircle2,
+  XCircle,
+  AlertCircle
 } from 'lucide-react'
 
 // 导入自定义扩展
 import { AIBlock } from './extensions/AIBlock'
+
+// 导入保存 Hook
+import { useCatPinSave, SaveStatus } from '@/hooks/useCatPinSave'
 
 // 创建 lowlight 实例
 const lowlight = createLowlight(common)
@@ -37,8 +45,10 @@ export interface CatPinEditorProps {
   content?: string
   /** 内容变化回调 */
   onChange?: (content: string) => void
-  /** 保存回调 */
-  onSave?: (content: string) => void
+  /** 保存成功回调 */
+  onSaveSuccess?: (id: string) => void
+  /** 保存失败回调 */
+  onSaveError?: (error: string) => void
   /** 占位符文本 */
   placeholder?: string
   /** 是否自动聚焦 */
@@ -93,11 +103,37 @@ function ToolbarSeparator() {
   return <div className="w-px h-6 bg-cyan-500/20 mx-1" />
 }
 
+// 状态指示器组件
+function StatusIndicator({ status, progress }: { status: SaveStatus; progress: string }) {
+  if (status === 'idle') return null
+
+  const statusConfig = {
+    extracting: { icon: Loader2, color: 'text-cyan-400', bg: 'bg-cyan-500/10', animate: 'animate-spin' },
+    embedding: { icon: Loader2, color: 'text-cyan-400', bg: 'bg-cyan-500/10', animate: 'animate-spin' },
+    saving: { icon: Loader2, color: 'text-cyan-400', bg: 'bg-cyan-500/10', animate: 'animate-spin' },
+    syncing: { icon: Loader2, color: 'text-cyan-400', bg: 'bg-cyan-500/10', animate: 'animate-spin' },
+    success: { icon: CheckCircle2, color: 'text-green-400', bg: 'bg-green-500/10', animate: '' },
+    error: { icon: XCircle, color: 'text-red-400', bg: 'bg-red-500/10', animate: '' },
+    idle: { icon: AlertCircle, color: 'text-gray-400', bg: 'bg-gray-500/10', animate: '' },
+  }
+
+  const config = statusConfig[status]
+  const Icon = config.icon
+
+  return (
+    <div className={cn('flex items-center gap-2 px-3 py-2 rounded-lg', config.bg)}>
+      <Icon className={cn('w-4 h-4', config.color, config.animate)} />
+      <span className={cn('text-sm', config.color)}>{progress}</span>
+    </div>
+  )
+}
+
 // CatPinEditor 组件
 export function CatPinEditor({
   content = '',
   onChange,
-  onSave,
+  onSaveSuccess,
+  onSaveError,
   placeholder = '开始输入，或按 "/" 打开命令菜单...',
   autoFocus = true,
   editable = true,
@@ -108,7 +144,16 @@ export function CatPinEditor({
 }: CatPinEditorProps) {
   const [wordCount, setWordCount] = useState(0)
   const [charCount, setCharCount] = useState(0)
-  const [isSaved, setIsSaved] = useState(true)
+  
+  // 使用保存 Hook
+  const { 
+    saveNote, 
+    status, 
+    progress, 
+    error, 
+    isSaving, 
+    lastResult 
+  } = useCatPinSave()
 
   // 创建编辑器
   const editor = useEditor({
@@ -139,7 +184,6 @@ export function CatPinEditor({
       // 更新字数统计
       setWordCount(text.split(/\s+/).filter(Boolean).length)
       setCharCount(text.length)
-      setIsSaved(false)
       
       // 触发变化回调
       onChange?.(html)
@@ -168,13 +212,24 @@ export function CatPinEditor({
     }
   }, [editor])
 
+  // 监听保存结果
+  useEffect(() => {
+    if (lastResult) {
+      if (lastResult.success && lastResult.id) {
+        onSaveSuccess?.(lastResult.id)
+      } else if (!lastResult.success && lastResult.error) {
+        onSaveError?.(lastResult.error)
+      }
+    }
+  }, [lastResult, onSaveSuccess, onSaveError])
+
   // 处理保存
-  const handleSave = useCallback(() => {
-    if (!editor) return
-    const content = editor.getHTML()
-    onSave?.(content)
-    setIsSaved(true)
-  }, [editor, onSave])
+  const handleSave = useCallback(async () => {
+    if (!editor || isSaving) return
+    
+    const content = editor.getText()
+    await saveNote(content)
+  }, [editor, isSaving, saveNote])
 
   // 工具栏操作
   const toggleBold = useCallback(() => editor?.chain().focus().toggleBold().run(), [editor])
@@ -348,13 +403,30 @@ export function CatPinEditor({
               variant="cyber"
               size="sm"
               onClick={handleSave}
-              disabled={isSaved}
+              disabled={isSaving}
               title="保存 (Ctrl+S)"
             >
-              <Save className="w-4 h-4 mr-2" />
-              {isSaved ? '已保存' : '保存'}
+              {isSaving ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Save className="w-4 h-4 mr-2" />
+              )}
+              {isSaving ? '保存中...' : '保存'}
             </Button>
           </div>
+        </div>
+      )}
+
+      {/* 状态指示器 */}
+      {status !== 'idle' && (
+        <div className="px-3 py-2 border-b border-cyan-500/20">
+          <StatusIndicator status={status} progress={progress} />
+          {error && (
+            <div className="flex items-center gap-2 mt-2 px-3 py-2 rounded-lg bg-red-500/10">
+              <AlertCircle className="w-4 h-4 text-red-400" />
+              <span className="text-sm text-red-400">{error}</span>
+            </div>
+          )}
         </div>
       )}
 
@@ -397,9 +469,22 @@ export function CatPinEditor({
               <span>词数: {wordCount}</span>
             </>
           )}
+          {lastResult?.success && lastResult.metadata && (
+            <div className="flex items-center gap-2">
+              <span>•</span>
+              <Badge variant="cyber" className="text-xs">
+                {lastResult.metadata.category}
+              </Badge>
+              {lastResult.metadata.tags.slice(0, 3).map((tag) => (
+                <Badge key={tag} variant="magenta" className="text-xs">
+                  {tag}
+                </Badge>
+              ))}
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-2 text-xs text-cyan-400/40">
-          <span>按 Ctrl+S 保存</span>
+          <span>Ctrl+S 保存</span>
           <span>•</span>
           <span>Ctrl+Shift+A 插入 AI 块</span>
         </div>
