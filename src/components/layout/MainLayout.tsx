@@ -425,10 +425,10 @@ export function MainLayout() {
           </div>
           
           <div className="flex items-center gap-3">
-            {/* Ollama 状态 */}
+            {/* Ollama 模型 */}
             <div className="flex items-center gap-1.5">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-              <span>Ollama 就绪</span>
+              <span>gemma4:e2b</span>
             </div>
             
             {/* AI 面板切换 */}
