@@ -1,4 +1,4 @@
-import { useEffect, forwardRef, useImperativeHandle } from 'react'
+import { useEffect, useCallback, forwardRef, useImperativeHandle } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
@@ -40,6 +40,8 @@ export interface CatPinEditorProps {
   className?: string
   /** 编辑器高度 */
   height?: string | number
+  /** 向上键到顶部时的回调 */
+  onArrowUpAtTop?: () => void
   /** 编辑器引用 */
   ref?: React.Ref<CatPinEditorRef>
 }
@@ -53,7 +55,9 @@ export const CatPinEditor = forwardRef<CatPinEditorRef, CatPinEditorProps>(funct
   editable = true,
   className,
   height = '100%',
+  onArrowUpAtTop,
 }, ref) {
+
   // 创建编辑器
   const editor = useEditor({
     extensions: [
@@ -93,6 +97,18 @@ export const CatPinEditor = forwardRef<CatPinEditorRef, CatPinEditorProps>(funct
     },
   })
 
+  // 检测光标是否在顶部
+  const isCursorAtTop = useCallback(() => {
+    if (!editor) return false
+    const { from } = editor.state.selection
+    const doc = editor.state.doc
+    // 检查光标是否在第一个块的开始位置
+    const firstBlock = doc.firstChild
+    if (!firstBlock) return true
+    const firstBlockStart = 1 // 文档开始位置
+    return from <= firstBlockStart + 1
+  }, [editor])
+
   // 暴露方法给父组件
   useImperativeHandle(ref, () => ({
     getEditor: () => editor,
@@ -106,6 +122,24 @@ export const CatPinEditor = forwardRef<CatPinEditorRef, CatPinEditorProps>(funct
       return editor.storage.markdown.getMarkdown()
     },
   }), [editor])
+
+  // 处理向上键跳转到标题
+  useEffect(() => {
+    if (!editor || !onArrowUpAtTop) return
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'ArrowUp' && isCursorAtTop()) {
+        event.preventDefault()
+        onArrowUpAtTop()
+      }
+    }
+
+    const editorElement = editor.view.dom
+    editorElement.addEventListener('keydown', handleKeyDown)
+    return () => {
+      editorElement.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [editor, onArrowUpAtTop, isCursorAtTop])
 
   // 保存快捷键
   useEffect(() => {

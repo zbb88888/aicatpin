@@ -553,8 +553,14 @@ export function MainLayout() {
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const editorRef = useRef<CatPinEditorRef>(null)
+  const titleInputRef = useRef<HTMLInputElement>(null)
   
   const { status, progress } = useCatPinSave()
+
+  // 聚焦标题输入框
+  const focusTitle = useCallback(() => {
+    titleInputRef.current?.focus()
+  }, [])
 
   // 命令列表
   const commands: CommandItem[] = useMemo(() => [
@@ -674,11 +680,11 @@ function example() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [])
 
-  // 标题回车键处理
+  // 标题键盘处理
   const handleTitleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
+    if (e.key === 'Enter' || e.key === 'ArrowDown') {
       e.preventDefault()
-      editorRef.current?.focus()
+      editorRef.current?.focus('start')
     }
   }, [])
 
@@ -738,6 +744,7 @@ function example() {
           <div className="max-w-2xl mx-auto px-8 py-12">
             {/* 标题输入 */}
             <input
+              ref={titleInputRef}
               type="text"
               placeholder="请输入主题"
               value={title}
@@ -754,6 +761,7 @@ function example() {
               placeholder="开始记录..."
               height="auto"
               className="border-0 bg-transparent"
+              onArrowUpAtTop={focusTitle}
             />
           </div>
         </div>
