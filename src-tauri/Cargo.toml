@@ -3,7 +3,7 @@ name = "aicatpin"
 version = "0.1.0"
 description = "AICatPin - AI原生知识IDE"
 authors = ["you"]
-edition = "2021"
+edition = "2024"
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
