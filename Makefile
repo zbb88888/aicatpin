@@ -128,6 +128,22 @@ dev-restart: ## 重启开发环境
 	$(DOCKER_COMPOSE) restart aicatpin
 	@echo "$(GREEN)✓ 开发环境已重启$(NC)"
 
+.PHONY: rerun
+rerun: ## 重新运行（清理+构建+启动）
+	@echo "$(BLUE)重新运行 AICatPin...$(NC)"
+	@echo "$(BLUE)1. 停止现有容器...$(NC)"
+	$(DOCKER_COMPOSE) down
+	@echo "$(BLUE)2. 重新构建镜像...$(NC)"
+	$(DOCKER_COMPOSE) build --no-cache
+	@echo "$(BLUE)3. 启动所有服务...$(NC)"
+	$(DOCKER_COMPOSE) up -d
+	@echo "$(GREEN)✓ AICatPin 已重新运行$(NC)"
+	@echo ""
+	@echo "$(GREEN)访问地址:$(NC)"
+	@echo "  前端: http://localhost:$(FRONTEND_PORT)"
+	@echo "  Supabase: http://localhost:$(SUPABASE_PORT)"
+	@echo "  Ollama: http://localhost:$(OLLAMA_PORT)"
+
 # ============================================================
 # 生产环境
 # ============================================================
