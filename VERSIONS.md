@@ -65,7 +65,7 @@
 
 | 镜像 | 版本 | 说明 |
 |------|------|------|
-| node | 22-slim | Node.js 运行时 |
+| node | 24-slim | Node.js 运行时 (Current) |
 
 ## 工具版本
 
