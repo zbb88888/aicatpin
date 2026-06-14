@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { cn } from '@/lib/utils'
 import { CatPinEditor } from '@/components/editor/CatPinEditor'
-import { useCatPinSave, SaveStatus } from '@/hooks/useCatPinSave'
+import { useCatPinSave } from '@/hooks/useCatPinSave'
+import type { SaveStatus } from '@/types'
 import { 
   Sparkles,
   Network,
