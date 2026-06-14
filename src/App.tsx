@@ -1,7 +1,7 @@
-import { MainLayout } from '@/components/layout/MainLayout'
+import { EditorDemo } from '@/components/editor/EditorDemo'
 
 function App() {
-  return <MainLayout />
+  return <EditorDemo />
 }
 
 export default App
