@@ -1,0 +1,8 @@
+{
+  "prompts": {
+    "project": {
+      "file": "prompts/project.md",
+      "description": "AICatPin 项目架构和开发指南"
+    }
+  }
+}
