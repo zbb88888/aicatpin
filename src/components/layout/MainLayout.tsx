@@ -4,38 +4,19 @@ import { CatPinEditor, type CatPinEditorRef } from '@/components/editor/CatPinEd
 import { useCatPinSave } from '@/hooks/useCatPinSave'
 import { GlobalBackground } from '@/components/Background'
 import type { SaveStatus } from '@/types'
-import { 
-  Sparkles,
-  Network,
-  X,
-  Search,
-  Plus,
-  Folder,
-  Hash,
-  HelpCircle,
-  Save,
-  Settings,
-  FileText,
-  ArrowRight,
-  Command
-} from 'lucide-react'
+import { Sparkles, X, Search, Plus, Save, FileText, ArrowRight, Command } from 'lucide-react'
 
-// ============================================================
-// 状态指示器组件
-// ============================================================
-
+// 状态指示器
 function StatusIndicator({ status, progress }: { status: SaveStatus; progress: string }) {
-  const statusConfig = {
+  const config = {
     idle: { color: 'text-mung-muted', dot: 'bg-mung-muted', text: '已同步' },
     extracting: { color: 'text-emerald-600', dot: 'bg-emerald-500 animate-pulse', text: 'AI 重构中...' },
     embedding: { color: 'text-emerald-600', dot: 'bg-emerald-500 animate-pulse', text: '向量计算中...' },
     saving: { color: 'text-emerald-600', dot: 'bg-emerald-500 animate-pulse', text: '持久化中...' },
-    syncing: { color: 'text-emerald-600', dot: 'bg-emerald-500 animate-pulse', text: '同步至文件系统...' },
-    success: { color: 'text-emerald-700', dot: 'bg-emerald-600', text: '已原子化落盘' },
+    syncing: { color: 'text-emerald-600', dot: 'bg-emerald-500 animate-pulse', text: '同步中...' },
+    success: { color: 'text-emerald-700', dot: 'bg-emerald-600', text: '已保存' },
     error: { color: 'text-red-600', dot: 'bg-red-500', text: '保存失败' },
-  }
-
-  const config = statusConfig[status]
+  }[status]
 
   return (
     <div className={cn('flex items-center gap-2 text-xs', config.color)}>
@@ -45,423 +26,118 @@ function StatusIndicator({ status, progress }: { status: SaveStatus; progress: s
   )
 }
 
-// ============================================================
-// 命令类型定义
-// ============================================================
-
+// 命令项类型
 interface CommandItem {
   id: string
   label: string
   description: string
   icon: React.ReactNode
   shortcut?: string
-  category?: string
   action: () => void
 }
 
-interface NoteItem {
-  id: string
-  title: string
-  summary: string
-  category: string
-  tags: string[]
-  updated: string
-}
-
-// ============================================================
-// 命令面板组件
-// ============================================================
-
-function CommandPalette({ 
-  isOpen, 
-  onClose,
-  commands,
-  notes: _notes,
-  onNoteSelect
-}: { 
+// 命令面板
+function CommandPalette({ isOpen, onClose, commands }: { 
   isOpen: boolean
   onClose: () => void
   commands: CommandItem[]
-  notes: NoteItem[]
-  onNoteSelect: (note: NoteItem) => void
 }) {
   const [query, setQuery] = useState('')
   const [selectedIndex, setSelectedIndex] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
-  const listRef = useRef<HTMLDivElement>(null)
 
-  // 解析前缀路由
-  const mode = useMemo(() => {
-    if (query.startsWith('>')) return 'actions'
-    if (query.startsWith('/')) return 'namespaces'
-    if (query.startsWith('#')) return 'tags'
-    return 'search'
-  }, [query])
+  const filtered = useMemo(() => 
+    commands.filter(cmd => 
+      cmd.label.toLowerCase().includes(query.toLowerCase()) ||
+      cmd.description.toLowerCase().includes(query.toLowerCase())
+    ), [commands, query])
 
-  // 获取搜索词（去除前缀）
-  const searchQuery = useMemo(() => {
-    return query.slice(1).trim()
-  }, [query])
-
-  // 模拟分类数据
-  const namespaces = useMemo(() => [
-    { name: 'Networking', count: 24 },
-    { name: 'Kernel', count: 18 },
-    { name: 'Database', count: 15 },
-    { name: 'Systems', count: 21 },
-    { name: 'Security', count: 12 },
-    { name: 'Programming', count: 32 },
-    { name: 'DevOps', count: 9 },
-    { name: 'AI', count: 7 },
-  ], [])
-
-  // 模拟标签数据
-  const tags = useMemo(() => [
-    { name: 'rust', count: 45 },
-    { name: 'linux', count: 38 },
-    { name: 'tcp/ip', count: 29 },
-    { name: 'security', count: 27 },
-    { name: 'database', count: 24 },
-    { name: 'performance', count: 22 },
-    { name: 'networking', count: 20 },
-    { name: 'kernel', count: 18 },
-  ], [])
-
-  // 模拟笔记数据
-  const mockNotes: NoteItem[] = useMemo(() => [
-    {
-      id: '1',
-      title: 'TCP/IP 协议栈深度解析',
-      summary: 'TCP/IP 协议栈是互联网的基础，它定义了数据如何在网络中传输...',
-      category: 'Networking',
-      tags: ['tcp/ip', 'networking', 'protocol'],
-      updated: '2 小时前'
-    },
-    {
-      id: '2',
-      title: 'Rust 所有权系统详解',
-      summary: 'Rust 的所有权系统是其最独特的特性之一，它确保了内存安全...',
-      category: 'Programming',
-      tags: ['rust', 'ownership', 'memory-safety'],
-      updated: '5 小时前'
-    },
-    {
-      id: '3',
-      title: 'Linux 内核调度器原理',
-      summary: 'Linux 内核调度器负责决定哪个进程在何时运行...',
-      category: 'Kernel',
-      tags: ['linux', 'kernel', 'scheduler'],
-      updated: '1 天前'
-    },
-    {
-      id: '4',
-      title: 'PostgreSQL 索引优化策略',
-      summary: '数据库索引是提高查询性能的关键技术...',
-      category: 'Database',
-      tags: ['postgresql', 'database', 'index'],
-      updated: '2 天前'
-    },
-  ], [])
-
-  // 过滤结果
-  const filteredItems = useMemo(() => {
-    switch (mode) {
-      case 'actions':
-        return commands.filter(cmd => 
-          cmd.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          cmd.description.toLowerCase().includes(searchQuery.toLowerCase())
-        ).map(cmd => ({ type: 'command' as const, item: cmd }))
-      
-      case 'namespaces':
-        return namespaces
-          .filter(ns => ns.name.toLowerCase().includes(searchQuery.toLowerCase()))
-          .map(ns => ({ type: 'namespace' as const, item: ns }))
-      
-      case 'tags':
-        return tags
-          .filter(tag => tag.name.toLowerCase().includes(searchQuery.toLowerCase()))
-          .map(tag => ({ type: 'tag' as const, item: tag }))
-      
-      case 'search':
-      default:
-        return mockNotes
-          .filter(note => 
-            note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            note.summary.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            note.tags.some(tag => tag.includes(searchQuery.toLowerCase()))
-          )
-          .map(note => ({ type: 'note' as const, item: note }))
-    }
-  }, [mode, searchQuery, commands, namespaces, tags, mockNotes])
-
-  // 重置选中索引
+  useEffect(() => { setSelectedIndex(0) }, [query])
+  
   useEffect(() => {
-    setSelectedIndex(0)
-  }, [query])
-
-  // 聚焦输入框
-  useEffect(() => {
-    if (isOpen) {
-      setTimeout(() => inputRef.current?.focus(), 100)
-    } else {
-      setQuery('')
-    }
+    if (isOpen) setTimeout(() => inputRef.current?.focus(), 100)
+    else setQuery('')
   }, [isOpen])
 
-  // 滚动到选中项
-  useEffect(() => {
-    if (listRef.current) {
-      const selectedElement = listRef.current.querySelector(`[data-index="${selectedIndex}"]`)
-      if (selectedElement) {
-        selectedElement.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
-      }
-    }
-  }, [selectedIndex])
-
-  // 键盘事件
   useEffect(() => {
     if (!isOpen) return
-
     const handleKeyDown = (e: KeyboardEvent) => {
-      switch (e.key) {
-        case 'ArrowUp':
-          e.preventDefault()
-          setSelectedIndex(prev => (prev > 0 ? prev - 1 : filteredItems.length - 1))
-          break
-        case 'ArrowDown':
-          e.preventDefault()
-          setSelectedIndex(prev => (prev < filteredItems.length - 1 ? prev + 1 : 0))
-          break
-        case 'Enter':
-          e.preventDefault()
-          if (filteredItems[selectedIndex]) {
-            const selected = filteredItems[selectedIndex]
-            if (selected.type === 'command') {
-              (selected.item as CommandItem).action()
-            } else if (selected.type === 'note') {
-              onNoteSelect(selected.item as NoteItem)
-            } else if (selected.type === 'namespace') {
-              setQuery('')
-              console.log('Switch to namespace:', (selected.item as { name: string }).name)
-            } else if (selected.type === 'tag') {
-              setQuery('')
-              console.log('Switch to tag:', (selected.item as { name: string }).name)
-            }
-            onClose()
-          }
-          break
-        case 'Escape':
-          e.preventDefault()
-          onClose()
-          break
+      if (e.key === 'ArrowUp') {
+        e.preventDefault()
+        setSelectedIndex(prev => prev > 0 ? prev - 1 : filtered.length - 1)
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault()
+        setSelectedIndex(prev => prev < filtered.length - 1 ? prev + 1 : 0)
+      } else if (e.key === 'Enter' && filtered[selectedIndex]) {
+        filtered[selectedIndex].action()
+        onClose()
+      } else if (e.key === 'Escape') {
+        onClose()
       }
     }
-
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [isOpen, filteredItems, selectedIndex, onClose, onNoteSelect])
+  }, [isOpen, filtered, selectedIndex, onClose])
 
   if (!isOpen) return null
 
-  // 获取模式提示
-  const getModeHint = () => {
-    switch (mode) {
-      case 'actions':
-        return { icon: <Command className="w-3 h-3" />, text: '动作模式', color: 'text-amber-700 bg-amber-100' }
-      case 'namespaces':
-        return { icon: <Folder className="w-3 h-3" />, text: '分类过滤', color: 'text-emerald-700 bg-emerald-100' }
-      case 'tags':
-        return { icon: <Hash className="w-3 h-3" />, text: '标签过滤', color: 'text-purple-700 bg-purple-100' }
-      case 'search':
-      default:
-        return { icon: <Search className="w-3 h-3" />, text: '全局搜索', color: 'text-mung-text bg-mung-border/30' }
-    }
-  }
-
-  const modeHint = getModeHint()
-
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh]">
-      {/* 背景遮罩 */}
-      <div 
-        className="absolute inset-0 bg-black/20 backdrop-blur-sm"
-        onClick={onClose}
-      />
-      
-      {/* 命令面板 */}
-      <div className="relative w-full max-w-2xl bg-mung-surface border border-mung-border rounded-xl shadow-xl overflow-hidden">
-        {/* 搜索框 */}
-        <div className="flex items-center gap-3 px-4 py-3.5 border-b border-mung-border">
-          <div className={cn('flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-medium', modeHint.color)}>
-            {modeHint.icon}
-            <span>{modeHint.text}</span>
-          </div>
+      <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative w-full max-w-xl bg-mung-surface border border-mung-border rounded-xl shadow-xl overflow-hidden">
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-mung-border">
+          <Command className="w-4 h-4 text-mung-muted" />
           <input
             ref={inputRef}
             type="text"
-            placeholder={
-              mode === 'actions' ? '搜索命令...' :
-              mode === 'namespaces' ? '搜索分类...' :
-              mode === 'tags' ? '搜索标签...' :
-                '搜索笔记...'
-            }
+            placeholder="搜索命令..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             className="flex-1 bg-transparent text-sm text-mung-text placeholder-mung-muted focus:outline-none"
           />
-          <kbd className="px-1.5 py-0.5 text-[10px] text-mung-muted bg-mung-border/30 rounded">
-            ESC
-          </kbd>
+          <kbd className="px-1.5 py-0.5 text-[10px] text-mung-muted bg-mung-border/30 rounded">ESC</kbd>
         </div>
-
-        {/* 前缀提示 */}
-        {query === '' && (
-          <div className="px-4 py-2 border-b border-mung-border/50 flex items-center gap-4 text-[10px] text-mung-muted">
-            <span><kbd className="px-1 py-0.5 bg-mung-border/30 rounded">&gt;</kbd> 命令</span>
-            <span><kbd className="px-1 py-0.5 bg-mung-border/30 rounded">/</kbd> 分类</span>
-            <span><kbd className="px-1 py-0.5 bg-mung-border/30 rounded">#</kbd> 标签</span>
-            <span>直接输入 搜索笔记</span>
-          </div>
-        )}
-
-        {/* 结果列表 */}
-        <div ref={listRef} className="max-h-[400px] overflow-y-auto">
-          {filteredItems.length === 0 ? (
-            <div className="px-4 py-12 text-center">
-              <Search className="w-8 h-8 text-mung-border mx-auto mb-3" />
-              <p className="text-sm text-mung-muted">没有找到匹配的内容</p>
-              <p className="text-xs text-mung-muted/70 mt-1">尝试使用不同的关键词</p>
-            </div>
+        <div className="max-h-80 overflow-y-auto">
+          {filtered.length === 0 ? (
+            <div className="px-4 py-8 text-center text-sm text-mung-muted">无匹配命令</div>
           ) : (
-            filteredItems.map((result, index) => (
+            filtered.map((cmd, i) => (
               <div
-                key={index}
-                data-index={index}
-                onClick={() => {
-                  if (result.type === 'command') {
-                    (result.item as CommandItem).action()
-                  } else if (result.type === 'note') {
-                    onNoteSelect(result.item as NoteItem)
-                  }
-                  onClose()
-                }}
+                key={cmd.id}
+                onClick={() => { cmd.action(); onClose() }}
                 className={cn(
-                  'px-4 py-3 cursor-pointer transition-colors',
-                  index === selectedIndex 
-                    ? 'bg-mung-hover' 
-                    : 'hover:bg-mung-hover/50'
+                  'px-4 py-2.5 flex items-center gap-3 cursor-pointer transition-colors',
+                  i === selectedIndex ? 'bg-mung-hover' : 'hover:bg-mung-hover/50'
                 )}
               >
-                {result.type === 'command' && (() => {
-                  const cmd = result.item as CommandItem
-                  return (
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-mung-border/20 flex items-center justify-center">
-                        {cmd.icon}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-mung-text">{cmd.label}</div>
-                        <div className="text-xs text-mung-muted truncate">{cmd.description}</div>
-                      </div>
-                      {cmd.shortcut && (
-                        <kbd className="px-2 py-1 text-[10px] text-mung-muted bg-mung-border/30 rounded">
-                          {cmd.shortcut}
-                        </kbd>
-                      )}
-                    </div>
-                  )
-                })()}
-
-                {result.type === 'note' && (() => {
-                  const note = result.item as NoteItem
-                  return (
-                    <div className="flex items-start gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-mung-border/20 flex items-center justify-center mt-0.5">
-                        <FileText className="w-4 h-4 text-mung-muted" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-mung-text">{note.title}</div>
-                        <div className="text-xs text-mung-muted mt-1 line-clamp-2">{note.summary}</div>
-                        <div className="flex items-center gap-2 mt-2">
-                          <span className="text-[10px] text-mung-muted/70">{note.category}</span>
-                          <span className="text-mung-border">·</span>
-                          <span className="text-[10px] text-mung-muted/70">{note.updated}</span>
-                        </div>
-                      </div>
-                      <ArrowRight className="w-4 h-4 text-mung-border mt-1" />
-                    </div>
-                  )
-                })()}
-
-                {result.type === 'namespace' && (() => {
-                  const ns = result.item as { name: string; count: number }
-                  return (
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center">
-                        <Folder className="w-4 h-4 text-emerald-600" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-mung-text">/{ns.name}</div>
-                        <div className="text-xs text-mung-muted">{ns.count} 篇笔记</div>
-                      </div>
-                    </div>
-                  )
-                })()}
-
-                {result.type === 'tag' && (() => {
-                  const tag = result.item as { name: string; count: number }
-                  return (
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center">
-                        <Hash className="w-4 h-4 text-purple-600" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-mung-text">#{tag.name}</div>
-                        <div className="text-xs text-mung-muted">{tag.count} 篇笔记</div>
-                      </div>
-                    </div>
-                  )
-                })()}
+                <div className="w-8 h-8 rounded-lg bg-mung-border/20 flex items-center justify-center">
+                  {cmd.icon}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium text-mung-text">{cmd.label}</div>
+                  <div className="text-xs text-mung-muted truncate">{cmd.description}</div>
+                </div>
+                {cmd.shortcut && (
+                  <kbd className="px-2 py-1 text-[10px] text-mung-muted bg-mung-border/30 rounded">
+                    {cmd.shortcut}
+                  </kbd>
+                )}
               </div>
             ))
           )}
         </div>
-
-        {/* 底部提示 */}
-        <div className="px-4 py-2.5 border-t border-mung-border flex items-center justify-between text-[10px] text-mung-muted">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1">
-              <kbd className="px-1 py-0.5 bg-mung-border/30 rounded">↑↓</kbd>
-              <span>导航</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <kbd className="px-1 py-0.5 bg-mung-border/30 rounded">Enter</kbd>
-              <span>选择</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <kbd className="px-1 py-0.5 bg-mung-border/30 rounded">Esc</kbd>
-              <span>关闭</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <span>{filteredItems.length} 个结果</span>
-          </div>
+        <div className="px-4 py-2 border-t border-mung-border flex items-center gap-4 text-[10px] text-mung-muted">
+          <span><kbd className="px-1 py-0.5 bg-mung-border/30 rounded">↑↓</kbd> 导航</span>
+          <span><kbd className="px-1 py-0.5 bg-mung-border/30 rounded">Enter</kbd> 选择</span>
+          <span><kbd className="px-1 py-0.5 bg-mung-border/30 rounded">Esc</kbd> 关闭</span>
         </div>
       </div>
     </div>
   )
 }
 
-// ============================================================
-// 右侧 AI 面板组件
-// ============================================================
-
-function AIPanel({ 
-  isOpen, 
-  onClose,
-  status,
-  progress 
-}: { 
+// AI 面板
+function AIPanel({ isOpen, onClose, status, progress }: { 
   isOpen: boolean
   onClose: () => void
   status: SaveStatus
@@ -471,331 +147,140 @@ function AIPanel({
 
   return (
     <aside className="w-72 h-full border-l border-mung-border bg-mung-surface/50 flex flex-col">
-      {/* 头部 */}
       <div className="p-3 flex items-center justify-between border-b border-mung-border">
         <div className="flex items-center gap-2">
           <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
           <span className="text-xs font-medium text-mung-text">AI 协作</span>
         </div>
-        <button 
-          onClick={onClose}
-          className="p-1 hover:bg-mung-hover rounded transition-colors"
-        >
+        <button onClick={onClose} className="p-1 hover:bg-mung-hover rounded">
           <X className="w-3.5 h-3.5 text-mung-muted" />
         </button>
       </div>
-
-      {/* 内容 */}
       <div className="flex-1 p-3 overflow-y-auto">
-        <div className="space-y-4">
-          {/* 状态卡片 */}
-          <div className="p-3 rounded-lg bg-mung-base border border-mung-border">
-            <StatusIndicator status={status} progress={progress} />
-          </div>
-
-          {/* 快捷操作 */}
-          <div className="space-y-2">
-            <h4 className="text-[10px] font-medium text-mung-muted uppercase tracking-wider">
-              快捷操作
-            </h4>
-            <div className="space-y-1">
-              {[
-                { label: '生成摘要', shortcut: 'Ctrl+Shift+S', icon: '✨' },
-                { label: '提取标签', shortcut: 'Ctrl+Shift+T', icon: '🏷️' },
-                { label: '关联图谱', shortcut: 'Ctrl+Shift+G', icon: '🔗' },
-                { label: '语义搜索', shortcut: 'Ctrl+K', icon: '🔍' },
-              ].map((action) => (
-                <button
-                  key={action.label}
-                  className="w-full flex items-center gap-2 px-2 py-1.5 text-xs text-mung-muted hover:text-mung-text hover:bg-mung-hover rounded-lg transition-colors"
-                >
-                  <span>{action.icon}</span>
-                  <span className="flex-1 text-left">{action.label}</span>
-                  <kbd className="px-1.5 py-0.5 text-[9px] text-mung-muted bg-mung-border/30 rounded">
-                    {action.shortcut}
-                  </kbd>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* 知识图谱预览 */}
-          <div className="space-y-2">
-            <h4 className="text-[10px] font-medium text-mung-muted uppercase tracking-wider">
-              关联图谱
-            </h4>
-            <div className="h-36 rounded-lg bg-mung-base border border-mung-border flex items-center justify-center">
-              <div className="text-center">
-                <Network className="w-8 h-8 text-mung-border mx-auto mb-2" />
-                <p className="text-[10px] text-mung-muted">
-                  暂无关联数据
-                </p>
-                <p className="text-[10px] text-mung-muted/70 mt-1">
-                  保存笔记后自动生成
-                </p>
-              </div>
-            </div>
-          </div>
+        <div className="p-3 rounded-lg bg-mung-base border border-mung-border">
+          <StatusIndicator status={status} progress={progress} />
         </div>
       </div>
     </aside>
   )
 }
 
-// ============================================================
-// 主布局组件
-// ============================================================
-
+// 主布局
 export function MainLayout() {
-  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false)
-  const [aiPanelOpen, setAiPanelOpen] = useState(false)
+  const [commandOpen, setCommandOpen] = useState(false)
+  const [aiOpen, setAiOpen] = useState(false)
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const editorRef = useRef<CatPinEditorRef>(null)
-  const titleInputRef = useRef<HTMLInputElement>(null)
-  
+  const titleRef = useRef<HTMLInputElement>(null)
   const { status, progress } = useCatPinSave()
 
-  // 聚焦标题输入框
-  const focusTitle = useCallback(() => {
-    titleInputRef.current?.focus()
-  }, [])
+  const focusTitle = useCallback(() => titleRef.current?.focus(), [])
 
-  // 命令列表
   const commands: CommandItem[] = useMemo(() => [
     {
-      id: 'new',
-      label: '新建笔记',
-      description: '创建一个新的空白笔记',
-      icon: <Plus className="w-4 h-4 text-mung-muted" />,
-      shortcut: 'Ctrl+N',
-      action: () => {
-        setTitle('')
-        setContent('')
-        setTimeout(() => editorRef.current?.focus(), 100)
-      }
+      id: 'new', label: '新建笔记', description: '创建空白笔记',
+      icon: <Plus className="w-4 h-4 text-mung-muted" />, shortcut: 'Ctrl+N',
+      action: () => { setTitle(''); setContent(''); setTimeout(() => editorRef.current?.focus(), 100) }
     },
     {
-      id: 'save',
-      label: '保存笔记',
-      description: '保存当前笔记到数据库',
-      icon: <Save className="w-4 h-4 text-mung-muted" />,
-      shortcut: 'Ctrl+S',
-      action: () => {
-        const event = new CustomEvent('editor-save')
-        window.dispatchEvent(event)
-      }
+      id: 'save', label: '保存笔记', description: '保存到数据库',
+      icon: <Save className="w-4 h-4 text-mung-muted" />, shortcut: 'Ctrl+S',
+      action: () => window.dispatchEvent(new CustomEvent('editor-save'))
     },
     {
-      id: 'ai',
-      label: 'AI 协作',
-      description: '打开 AI 协作面板',
-      icon: <Sparkles className="w-4 h-4 text-emerald-600" />,
-      shortcut: 'Ctrl+Shift+A',
-      action: () => setAiPanelOpen(true)
-    },
-    {
-      id: 'settings',
-      label: '设置',
-      description: '打开应用设置',
-      icon: <Settings className="w-4 h-4 text-mung-muted" />,
-      action: () => console.log('Settings')
-    },
-    {
-      id: 'help',
-      label: '帮助',
-      description: '查看快捷键和命令列表',
-      icon: <HelpCircle className="w-4 h-4 text-mung-muted" />,
-      shortcut: 'F1',
-      action: () => console.log('Help')
+      id: 'ai', label: 'AI 协作', description: '打开 AI 面板',
+      icon: <Sparkles className="w-4 h-4 text-emerald-600" />, shortcut: 'Ctrl+Shift+A',
+      action: () => setAiOpen(true)
     },
   ], [])
 
-  // 选中笔记回调
-  const handleNoteSelect = useCallback((note: { id: string; title: string; summary: string; category: string; tags: string[] }) => {
-    setTitle(note.title)
-    
-    const mockContent = `# ${note.title}
-
-${note.summary}
-
-## 核心概念
-
-这里是笔记的主要内容...
-
-## 详细说明
-
-1. 第一点
-2. 第二点
-3. 第三点
-
-## 代码示例
-
-\`\`\`javascript
-function example() {
-  console.log("Hello, AICatPin!");
-}
-\`\`\`
-
-## 总结
-
-这是笔记的总结部分。`
-    
-    setContent(mockContent)
-    
-    setTimeout(() => {
-      editorRef.current?.focus('end')
-    }, 100)
-  }, [])
-
-  // 快捷键处理
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault()
-        setCommandPaletteOpen(prev => !prev)
-      }
-      
-      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'A') {
-        e.preventDefault()
-        setAiPanelOpen(prev => !prev)
-      }
-
-      if ((e.metaKey || e.ctrlKey) && e.key === 'n') {
-        e.preventDefault()
-        setTitle('')
-        setContent('')
-        setTimeout(() => editorRef.current?.focus(), 100)
-      }
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); setCommandOpen(prev => !prev) }
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'A') { e.preventDefault(); setAiOpen(prev => !prev) }
+      if ((e.metaKey || e.ctrlKey) && e.key === 'n') { e.preventDefault(); setTitle(''); setContent(''); setTimeout(() => editorRef.current?.focus(), 100) }
     }
-
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [])
 
-  // 标题键盘处理
   const handleTitleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' || e.key === 'ArrowDown') {
-      e.preventDefault()
-      editorRef.current?.focus('start')
-    }
+    if (e.key === 'Enter' || e.key === 'ArrowDown') { e.preventDefault(); editorRef.current?.focus('start') }
   }, [])
+
+  const wordCount = content.replace(/<[^>]*>/g, '').length
+  const charCount = content.replace(/<[^>]*>/g, '').split(/\s+/).filter(Boolean).length
 
   return (
     <GlobalBackground>
-    <div className="flex h-screen w-screen">
-      {/* 中间主内容区 */}
-      <main className="flex-1 flex flex-col h-full bg-mung-base min-w-0">
-        {/* 顶部状态条 */}
-        <header className="h-10 border-b border-mung-border flex items-center justify-between px-6 text-xs text-mung-muted">
-          <div className="flex items-center gap-3">
-            {/* Logo */}
-            <div className="flex items-center gap-2">
-              <div className="w-5 h-5 rounded bg-mung-border/30 flex items-center justify-center">
-                <Sparkles className="w-3 h-3 text-emerald-600" />
+      <div className="flex h-screen w-screen">
+        <main className="flex-1 flex flex-col h-full bg-mung-base min-w-0">
+          <header className="h-10 border-b border-mung-border flex items-center justify-between px-6 text-xs text-mung-muted">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <div className="w-5 h-5 rounded bg-mung-border/30 flex items-center justify-center">
+                  <Sparkles className="w-3 h-3 text-emerald-600" />
+                </div>
+                <span className="text-xs font-medium text-mung-text tracking-wider">AICATPIN</span>
               </div>
-              <span className="text-xs font-medium text-mung-text tracking-wider">AICATPIN</span>
-            </div>
-            
-            {/* 扁平路径 */}
-            <div className="flex items-center gap-1.5">
               <span className="text-mung-border">/</span>
               <span className="text-mung-muted italic">未分类</span>
             </div>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            {/* Ollama 模型 */}
-            <div className="flex items-center gap-1.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-              <span>gemma4:e2b</span>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                <span>gemma4:e2b</span>
+              </div>
+              <button onClick={() => setCommandOpen(true)} className="flex items-center gap-2 px-2 py-1 text-xs text-mung-muted hover:text-mung-text hover:bg-mung-hover rounded">
+                <Search className="w-3 h-3" />
+                <span>Ctrl+K</span>
+              </button>
+              <button onClick={() => setAiOpen(prev => !prev)} className={cn('p-1 rounded', aiOpen ? 'bg-mung-hover text-mung-text' : 'hover:bg-mung-hover/50')}>
+                <Sparkles className="w-3.5 h-3.5" />
+              </button>
             </div>
+          </header>
 
-            {/* 命令面板 */}
-            <button
-              onClick={() => setCommandPaletteOpen(true)}
-              className="flex items-center gap-2 px-2 py-1 text-xs text-mung-muted hover:text-mung-text hover:bg-mung-hover rounded transition-colors"
-            >
-              <Search className="w-3 h-3" />
-              <span>Ctrl+K</span>
-            </button>
-            
-            {/* AI 面板切换 */}
-            <button
-              onClick={() => setAiPanelOpen(prev => !prev)}
-              className={cn(
-                'p-1 rounded transition-colors',
-                aiPanelOpen ? 'bg-mung-hover text-mung-text' : 'hover:bg-mung-hover/50'
-              )}
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-            </button>
+          <div className="flex-1 overflow-y-auto">
+            <div className="max-w-2xl mx-auto px-8 py-12">
+              <input
+                ref={titleRef}
+                type="text"
+                placeholder="请输入主题"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                onKeyDown={handleTitleKeyDown}
+                className="w-full text-4xl font-extrabold tracking-tight leading-tight bg-transparent text-mung-text placeholder-mung-muted/50 focus:outline-none border-none mb-6 pb-4 border-b border-mung-border"
+              />
+              <CatPinEditor
+                ref={editorRef}
+                content={content}
+                onChange={setContent}
+                placeholder="开始记录..."
+                height="auto"
+                className="border-0 bg-transparent"
+                onArrowUpAtTop={focusTitle}
+              />
+            </div>
           </div>
-        </header>
 
-        {/* 编辑器区域 */}
-        <div className="flex-1 overflow-y-auto">
-          <div className="max-w-2xl mx-auto px-8 py-12">
-            {/* 标题输入 */}
-            <input
-              ref={titleInputRef}
-              type="text"
-              placeholder="请输入主题"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              onKeyDown={handleTitleKeyDown}
-              className="w-full text-4xl font-extrabold tracking-tight leading-tight bg-transparent text-mung-text placeholder-mung-muted/50 focus:outline-none focus:ring-0 border-none mb-6 pb-4 border-b border-mung-border"
-            />
+          <footer className="h-8 px-6 border-t border-mung-border flex items-center justify-between text-[11px] text-mung-muted">
+            <div className="flex items-center gap-3">
+              <span>字数: {wordCount}</span>
+              <span className="text-mung-border">·</span>
+              <span>词数: {charCount}</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-mung-muted/70">Ctrl+S 保存</span>
+              <StatusIndicator status={status} progress={progress} />
+            </div>
+          </footer>
+        </main>
 
-            {/* TipTap 编辑器 */}
-            <CatPinEditor
-              ref={editorRef}
-              content={content}
-              onChange={setContent}
-              placeholder="开始记录..."
-              height="auto"
-              className="border-0 bg-transparent"
-              onArrowUpAtTop={focusTitle}
-            />
-          </div>
-        </div>
-
-        {/* 底部状态栏 */}
-        <footer className="h-8 px-6 border-t border-mung-border flex items-center justify-between text-[11px] text-mung-muted">
-          <div className="flex items-center gap-3">
-            <span>
-              字数: {content.replace(/<[^>]*>/g, '').length}
-            </span>
-            <span className="text-mung-border">·</span>
-            <span>
-              词数: {content.replace(/<[^>]*>/g, '').split(/\s+/).filter(Boolean).length}
-            </span>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            <span className="text-mung-muted/70">Ctrl+S 保存</span>
-            <StatusIndicator status={status} progress={progress} />
-          </div>
-        </footer>
-      </main>
-
-      {/* 命令面板 */}
-      <CommandPalette
-        isOpen={commandPaletteOpen}
-        onClose={() => setCommandPaletteOpen(false)}
-        commands={commands}
-        notes={[]}
-        onNoteSelect={handleNoteSelect}
-      />
-
-      {/* 右侧 AI 面板 */}
-      <AIPanel
-        isOpen={aiPanelOpen}
-        onClose={() => setAiPanelOpen(false)}
-        status={status}
-        progress={progress}
-      />
-    </div>
+        <CommandPalette isOpen={commandOpen} onClose={() => setCommandOpen(false)} commands={commands} />
+        <AIPanel isOpen={aiOpen} onClose={() => setAiOpen(false)} status={status} progress={progress} />
+      </div>
     </GlobalBackground>
   )
 }

@@ -1,13 +1,5 @@
-// AICatPin 类型定义
-
-/**
- * 保存状态
- */
 export type SaveStatus = 'idle' | 'extracting' | 'embedding' | 'saving' | 'syncing' | 'success' | 'error'
 
-/**
- * 保存结果
- */
 export interface SaveResult {
   success: boolean
   id?: string
@@ -20,9 +12,6 @@ export interface SaveResult {
   }
 }
 
-/**
- * 笔记数据结构
- */
 export interface Note {
   id: string
   title: string

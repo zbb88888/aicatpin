@@ -1,9 +1,7 @@
 import { Node, mergeAttributes } from '@tiptap/core'
 
-// AI 块状态类型
 export type AIBlockStatus = 'idle' | 'loading' | 'streaming' | 'complete' | 'error'
 
-// AI 块属性接口
 export interface AIBlockAttrs {
   status: AIBlockStatus
   prompt: string
@@ -13,7 +11,6 @@ export interface AIBlockAttrs {
   timestamp?: number
 }
 
-// 声明 TipTap 模块类型
 declare module '@tiptap/core' {
   interface Commands<ReturnType> {
     aiBlock: {
@@ -23,14 +20,10 @@ declare module '@tiptap/core' {
   }
 }
 
-// 创建 AI 块扩展
 export const AIBlock = Node.create({
   name: 'aiBlock',
-
   group: 'block',
-
   content: 'inline*',
-
   defining: true,
 
   addAttributes() {
@@ -54,26 +47,13 @@ export const AIBlock = Node.create({
 
   addCommands() {
     return {
-      insertAIBlock:
-        (attrs?: Partial<AIBlockAttrs>) =>
-        ({ commands }) => {
-          return commands.insertContent({
-            type: this.name,
-            attrs: {
-              status: 'loading',
-              prompt: '',
-              content: '',
-              timestamp: Date.now(),
-              ...attrs,
-            },
-          })
-        },
-
-      updateAIBlock:
-        (attrs: Partial<AIBlockAttrs>) =>
-        ({ commands }) => {
-          return commands.updateAttributes(this.name, attrs)
-        },
+      insertAIBlock: (attrs?: Partial<AIBlockAttrs>) => ({ commands }) =>
+        commands.insertContent({
+          type: this.name,
+          attrs: { status: 'loading', prompt: '', content: '', timestamp: Date.now(), ...attrs },
+        }),
+      updateAIBlock: (attrs: Partial<AIBlockAttrs>) => ({ commands }) =>
+        commands.updateAttributes(this.name, attrs),
     }
   },
 })
