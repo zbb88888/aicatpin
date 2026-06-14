@@ -743,7 +743,7 @@ function example() {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               onKeyDown={handleTitleKeyDown}
-              className="w-full text-4xl font-extrabold tracking-tight bg-transparent text-zinc-100 placeholder-zinc-700 focus:outline-none focus:ring-0 border-none mb-8"
+              className="w-full text-4xl font-extrabold tracking-tight leading-tight bg-transparent text-zinc-100 placeholder-zinc-700 focus:outline-none focus:ring-0 border-none mb-6 pb-4 border-b border-zinc-800/30"
             />
 
             {/* TipTap 编辑器 */}
