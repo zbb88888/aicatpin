@@ -167,7 +167,7 @@ export const CatPinEditor = forwardRef<CatPinEditorRef, CatPinEditorProps>(funct
   if (!editor) {
     return (
       <div className="flex items-center justify-center h-32">
-        <div className="text-zinc-600 text-sm">加载编辑器...</div>
+        <div className="text-mung-muted text-sm">加载编辑器...</div>
       </div>
     )
   }
@@ -185,45 +185,46 @@ export const CatPinEditor = forwardRef<CatPinEditorRef, CatPinEditorProps>(funct
         <EditorContent
           editor={editor}
           className={cn(
-            'prose prose-invert max-w-none',
+            'prose max-w-none',
             // H1 主标题：极为醒目
-            '[&_h1]:text-4xl [&_h1]:font-extrabold [&_h1]:tracking-tight [&_h1]:text-zinc-100 [&_h1]:mb-8',
+            '[&_h1]:text-4xl [&_h1]:font-extrabold [&_h1]:tracking-tight [&_h1]:text-mung-text [&_h1]:mb-8',
             // H2 模块标题：强烈的视觉分块感
-            '[&_h2]:text-2xl [&_h2]:font-semibold [&_h2]:text-zinc-200 [&_h2]:mt-12 [&_h2]:pb-2 [&_h2]:border-b [&_h2]:border-zinc-800/50',
+            '[&_h2]:text-2xl [&_h2]:font-semibold [&_h2]:text-mung-text [&_h2]:mt-10 [&_h2]:pb-2 [&_h2]:border-b [&_h2]:border-mung-border',
             // H3 子标题
-            '[&_h3]:text-xl [&_h3]:text-zinc-200 [&_h3]:mt-8 [&_h3]:mb-4',
+            '[&_h3]:text-xl [&_h3]:text-mung-text [&_h3]:mt-8 [&_h3]:mb-4',
             // H4-H6
-            '[&_h4]:text-lg [&_h4]:font-medium [&_h4]:text-zinc-200 [&_h4]:mt-6 [&_h4]:mb-3',
-            '[&_h5]:text-base [&_h5]:font-medium [&_h5]:text-zinc-200 [&_h5]:mt-4 [&_h5]:mb-2',
-            '[&_h6]:text-sm [&_h6]:font-medium [&_h6]:text-zinc-200 [&_h6]:mt-4 [&_h6]:mb-2',
+            '[&_h4]:text-lg [&_h4]:font-medium [&_h4]:text-mung-text [&_h4]:mt-6 [&_h4]:mb-3',
+            '[&_h5]:text-base [&_h5]:font-medium [&_h5]:text-mung-text [&_h5]:mt-4 [&_h5]:mb-2',
+            '[&_h6]:text-sm [&_h6]:font-medium [&_h6]:text-mung-text [&_h6]:mt-4 [&_h6]:mb-2',
             // 正文段落：提升呼吸感
-            '[&_p]:text-zinc-300 [&_p]:leading-relaxed [&_p]:mb-6',
-            // 粗体
-            '[&_strong]:text-zinc-100 [&_strong]:font-semibold',
+            '[&_p]:text-mung-text [&_p]:leading-relaxed [&_p]:mb-6',
+            // 粗体：比正文更深一阶的墨色
+            '[&_strong]:text-[#1A261B] [&_strong]:font-bold',
             // 斜体
-            '[&_em]:text-zinc-400',
-            // 内联代码：科技感点缀
-            '[&_code]:text-cyan-400 [&_code]:bg-zinc-800/50 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-sm [&_code]:before:content-none [&_code]:after:content-none',
+            '[&_em]:text-mung-muted',
+            // 内联代码
+            '[&_code]:text-emerald-700 [&_code]:bg-mung-border/30 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-sm [&_code]:before:content-none [&_code]:after:content-none',
             // 代码块
-            '[&_pre]:bg-zinc-900/50 [&_pre]:border [&_pre]:border-zinc-800/50 [&_pre]:rounded-lg [&_pre]:p-4',
+            '[&_pre]:bg-mung-border/20 [&_pre]:border [&_pre]:border-mung-border [&_pre]:rounded-lg [&_pre]:p-4',
+            '[&_pre_code]:bg-transparent [&_pre_code]:text-mung-text',
             // 引用
-            '[&_blockquote]:border-l-2 [&_blockquote]:border-zinc-700/50 [&_blockquote]:pl-4 [&_blockquote]:text-zinc-400 [&_blockquote]:italic',
+            '[&_blockquote]:border-l-2 [&_blockquote]:border-mung-border [&_blockquote]:pl-4 [&_blockquote]:text-mung-muted [&_blockquote]:italic',
             // 列表
-            '[&_ul]:text-zinc-300 [&_ol]:text-zinc-300',
-            '[&_li]:text-zinc-300 [&_li]:mb-1',
+            '[&_ul]:text-mung-text [&_ol]:text-mung-text',
+            '[&_li]:text-mung-text [&_li]:mb-1',
             // 链接
-            '[&_a]:text-cyan-400 [&_a]:no-underline hover:[&_a]:underline',
+            '[&_a]:text-emerald-700 [&_a]:no-underline hover:[&_a]:underline',
             // 分割线
-            '[&_hr]:border-zinc-800/50 [&_hr]:my-8',
+            '[&_hr]:border-mung-border [&_hr]:my-8',
             // 图片
-            '[&_img]:rounded-lg [&_img]:border [&_img]:border-zinc-800/50',
+            '[&_img]:rounded-lg [&_img]:border [&_img]:border-mung-border',
             // 表格
             '[&_table]:border-collapse',
-            '[&_th]:border [&_th]:border-zinc-800/50 [&_th]:px-3 [&_th]:py-2 [&_th]:bg-zinc-900/50 [&_th]:text-zinc-200 [&_th]:font-medium',
-            '[&_td]:border [&_td]:border-zinc-800/50 [&_td]:px-3 [&_td]:py-2',
+            '[&_th]:border [&_th]:border-mung-border [&_th]:px-3 [&_th]:py-2 [&_th]:bg-mung-border/20 [&_th]:text-mung-text [&_th]:font-medium',
+            '[&_td]:border [&_td]:border-mung-border [&_td]:px-3 [&_td]:py-2',
             // 占位符样式
             '[&_.is-editor-empty:first-child::before]:content-[attr(data-placeholder)]',
-            '[&_.is-editor-empty:first-child::before]:text-zinc-600',
+            '[&_.is-editor-empty:first-child::before]:text-mung-muted',
             '[&_.is-editor-empty:first-child::before]:float-left',
             '[&_.is-editor-empty:first-child::before]:h-0',
             '[&_.is-editor-empty:first-child::before]:pointer-events-none',

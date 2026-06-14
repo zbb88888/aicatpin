@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { cn } from '@/lib/utils'
 import { CatPinEditor, type CatPinEditorRef } from '@/components/editor/CatPinEditor'
 import { useCatPinSave } from '@/hooks/useCatPinSave'
+import { GlobalBackground } from '@/components/Background'
 import type { SaveStatus } from '@/types'
 import { 
   Sparkles,
@@ -25,13 +26,13 @@ import {
 
 function StatusIndicator({ status, progress }: { status: SaveStatus; progress: string }) {
   const statusConfig = {
-    idle: { color: 'text-zinc-500', dot: 'bg-zinc-500', text: '已同步' },
-    extracting: { color: 'text-cyan-400', dot: 'bg-cyan-400 animate-pulse', text: 'AI 重构中...' },
-    embedding: { color: 'text-cyan-400', dot: 'bg-cyan-400 animate-pulse', text: '向量计算中...' },
-    saving: { color: 'text-cyan-400', dot: 'bg-cyan-400 animate-pulse', text: '持久化中...' },
-    syncing: { color: 'text-cyan-400', dot: 'bg-cyan-400 animate-pulse', text: '同步至文件系统...' },
-    success: { color: 'text-emerald-400', dot: 'bg-emerald-400', text: '已原子化落盘' },
-    error: { color: 'text-red-400', dot: 'bg-red-400', text: '保存失败' },
+    idle: { color: 'text-mung-muted', dot: 'bg-mung-muted', text: '已同步' },
+    extracting: { color: 'text-emerald-600', dot: 'bg-emerald-500 animate-pulse', text: 'AI 重构中...' },
+    embedding: { color: 'text-emerald-600', dot: 'bg-emerald-500 animate-pulse', text: '向量计算中...' },
+    saving: { color: 'text-emerald-600', dot: 'bg-emerald-500 animate-pulse', text: '持久化中...' },
+    syncing: { color: 'text-emerald-600', dot: 'bg-emerald-500 animate-pulse', text: '同步至文件系统...' },
+    success: { color: 'text-emerald-700', dot: 'bg-emerald-600', text: '已原子化落盘' },
+    error: { color: 'text-red-600', dot: 'bg-red-500', text: '保存失败' },
   }
 
   const config = statusConfig[status]
@@ -240,11 +241,9 @@ function CommandPalette({
             } else if (selected.type === 'note') {
               onNoteSelect(selected.item as NoteItem)
             } else if (selected.type === 'namespace') {
-              // 切换到该命名空间的搜索
               setQuery('')
               console.log('Switch to namespace:', (selected.item as { name: string }).name)
             } else if (selected.type === 'tag') {
-              // 切换到该标签的搜索
               setQuery('')
               console.log('Switch to tag:', (selected.item as { name: string }).name)
             }
@@ -268,14 +267,14 @@ function CommandPalette({
   const getModeHint = () => {
     switch (mode) {
       case 'actions':
-        return { icon: <Command className="w-3 h-3" />, text: '动作模式', color: 'text-amber-400' }
+        return { icon: <Command className="w-3 h-3" />, text: '动作模式', color: 'text-amber-700 bg-amber-100' }
       case 'namespaces':
-        return { icon: <Folder className="w-3 h-3" />, text: '分类过滤', color: 'text-emerald-400' }
+        return { icon: <Folder className="w-3 h-3" />, text: '分类过滤', color: 'text-emerald-700 bg-emerald-100' }
       case 'tags':
-        return { icon: <Hash className="w-3 h-3" />, text: '标签过滤', color: 'text-purple-400' }
+        return { icon: <Hash className="w-3 h-3" />, text: '标签过滤', color: 'text-purple-700 bg-purple-100' }
       case 'search':
       default:
-        return { icon: <Search className="w-3 h-3" />, text: '全局搜索', color: 'text-cyan-400' }
+        return { icon: <Search className="w-3 h-3" />, text: '全局搜索', color: 'text-mung-text bg-mung-border/30' }
     }
   }
 
@@ -285,15 +284,15 @@ function CommandPalette({
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh]">
       {/* 背景遮罩 */}
       <div 
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/20 backdrop-blur-sm"
         onClick={onClose}
       />
       
       {/* 命令面板 */}
-      <div className="relative w-full max-w-2xl bg-zinc-900/95 border border-zinc-800/50 rounded-xl shadow-2xl overflow-hidden backdrop-blur-xl">
+      <div className="relative w-full max-w-2xl bg-mung-surface border border-mung-border rounded-xl shadow-xl overflow-hidden">
         {/* 搜索框 */}
-        <div className="flex items-center gap-3 px-4 py-3.5 border-b border-zinc-800/50">
-          <div className={cn('flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-medium', modeHint.color, 'bg-zinc-800/50')}>
+        <div className="flex items-center gap-3 px-4 py-3.5 border-b border-mung-border">
+          <div className={cn('flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-medium', modeHint.color)}>
             {modeHint.icon}
             <span>{modeHint.text}</span>
           </div>
@@ -308,19 +307,19 @@ function CommandPalette({
             }
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="flex-1 bg-transparent text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none"
+            className="flex-1 bg-transparent text-sm text-mung-text placeholder-mung-muted focus:outline-none"
           />
-          <kbd className="px-1.5 py-0.5 text-[10px] text-zinc-500 bg-zinc-800/50 rounded">
+          <kbd className="px-1.5 py-0.5 text-[10px] text-mung-muted bg-mung-border/30 rounded">
             ESC
           </kbd>
         </div>
 
         {/* 前缀提示 */}
         {query === '' && (
-          <div className="px-4 py-2 border-b border-zinc-800/30 flex items-center gap-4 text-[10px] text-zinc-600">
-            <span><kbd className="px-1 py-0.5 bg-zinc-800/50 rounded">&gt;</kbd> 命令</span>
-            <span><kbd className="px-1 py-0.5 bg-zinc-800/50 rounded">/</kbd> 分类</span>
-            <span><kbd className="px-1 py-0.5 bg-zinc-800/50 rounded">#</kbd> 标签</span>
+          <div className="px-4 py-2 border-b border-mung-border/50 flex items-center gap-4 text-[10px] text-mung-muted">
+            <span><kbd className="px-1 py-0.5 bg-mung-border/30 rounded">&gt;</kbd> 命令</span>
+            <span><kbd className="px-1 py-0.5 bg-mung-border/30 rounded">/</kbd> 分类</span>
+            <span><kbd className="px-1 py-0.5 bg-mung-border/30 rounded">#</kbd> 标签</span>
             <span>直接输入 搜索笔记</span>
           </div>
         )}
@@ -329,9 +328,9 @@ function CommandPalette({
         <div ref={listRef} className="max-h-[400px] overflow-y-auto">
           {filteredItems.length === 0 ? (
             <div className="px-4 py-12 text-center">
-              <Search className="w-8 h-8 text-zinc-700 mx-auto mb-3" />
-              <p className="text-sm text-zinc-500">没有找到匹配的内容</p>
-              <p className="text-xs text-zinc-600 mt-1">尝试使用不同的关键词</p>
+              <Search className="w-8 h-8 text-mung-border mx-auto mb-3" />
+              <p className="text-sm text-mung-muted">没有找到匹配的内容</p>
+              <p className="text-xs text-mung-muted/70 mt-1">尝试使用不同的关键词</p>
             </div>
           ) : (
             filteredItems.map((result, index) => (
@@ -349,23 +348,23 @@ function CommandPalette({
                 className={cn(
                   'px-4 py-3 cursor-pointer transition-colors',
                   index === selectedIndex 
-                    ? 'bg-zinc-800/50' 
-                    : 'hover:bg-zinc-800/30'
+                    ? 'bg-mung-hover' 
+                    : 'hover:bg-mung-hover/50'
                 )}
               >
                 {result.type === 'command' && (() => {
                   const cmd = result.item as CommandItem
                   return (
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-zinc-800/50 flex items-center justify-center">
+                      <div className="w-8 h-8 rounded-lg bg-mung-border/20 flex items-center justify-center">
                         {cmd.icon}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-zinc-200">{cmd.label}</div>
-                        <div className="text-xs text-zinc-500 truncate">{cmd.description}</div>
+                        <div className="text-sm font-medium text-mung-text">{cmd.label}</div>
+                        <div className="text-xs text-mung-muted truncate">{cmd.description}</div>
                       </div>
                       {cmd.shortcut && (
-                        <kbd className="px-2 py-1 text-[10px] text-zinc-500 bg-zinc-800/50 rounded">
+                        <kbd className="px-2 py-1 text-[10px] text-mung-muted bg-mung-border/30 rounded">
                           {cmd.shortcut}
                         </kbd>
                       )}
@@ -377,19 +376,19 @@ function CommandPalette({
                   const note = result.item as NoteItem
                   return (
                     <div className="flex items-start gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-zinc-800/50 flex items-center justify-center mt-0.5">
-                        <FileText className="w-4 h-4 text-zinc-400" />
+                      <div className="w-8 h-8 rounded-lg bg-mung-border/20 flex items-center justify-center mt-0.5">
+                        <FileText className="w-4 h-4 text-mung-muted" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-zinc-200">{note.title}</div>
-                        <div className="text-xs text-zinc-500 mt-1 line-clamp-2">{note.summary}</div>
+                        <div className="text-sm font-medium text-mung-text">{note.title}</div>
+                        <div className="text-xs text-mung-muted mt-1 line-clamp-2">{note.summary}</div>
                         <div className="flex items-center gap-2 mt-2">
-                          <span className="text-[10px] text-zinc-600">{note.category}</span>
-                          <span className="text-zinc-700">·</span>
-                          <span className="text-[10px] text-zinc-600">{note.updated}</span>
+                          <span className="text-[10px] text-mung-muted/70">{note.category}</span>
+                          <span className="text-mung-border">·</span>
+                          <span className="text-[10px] text-mung-muted/70">{note.updated}</span>
                         </div>
                       </div>
-                      <ArrowRight className="w-4 h-4 text-zinc-600 mt-1" />
+                      <ArrowRight className="w-4 h-4 text-mung-border mt-1" />
                     </div>
                   )
                 })()}
@@ -398,12 +397,12 @@ function CommandPalette({
                   const ns = result.item as { name: string; count: number }
                   return (
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-zinc-800/50 flex items-center justify-center">
-                        <Folder className="w-4 h-4 text-emerald-400" />
+                      <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center">
+                        <Folder className="w-4 h-4 text-emerald-600" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-zinc-200">/{ns.name}</div>
-                        <div className="text-xs text-zinc-500">{ns.count} 篇笔记</div>
+                        <div className="text-sm font-medium text-mung-text">/{ns.name}</div>
+                        <div className="text-xs text-mung-muted">{ns.count} 篇笔记</div>
                       </div>
                     </div>
                   )
@@ -413,12 +412,12 @@ function CommandPalette({
                   const tag = result.item as { name: string; count: number }
                   return (
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-zinc-800/50 flex items-center justify-center">
-                        <Hash className="w-4 h-4 text-purple-400" />
+                      <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center">
+                        <Hash className="w-4 h-4 text-purple-600" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-zinc-200">#{tag.name}</div>
-                        <div className="text-xs text-zinc-500">{tag.count} 篇笔记</div>
+                        <div className="text-sm font-medium text-mung-text">#{tag.name}</div>
+                        <div className="text-xs text-mung-muted">{tag.count} 篇笔记</div>
                       </div>
                     </div>
                   )
@@ -429,18 +428,18 @@ function CommandPalette({
         </div>
 
         {/* 底部提示 */}
-        <div className="px-4 py-2.5 border-t border-zinc-800/50 flex items-center justify-between text-[10px] text-zinc-600">
+        <div className="px-4 py-2.5 border-t border-mung-border flex items-center justify-between text-[10px] text-mung-muted">
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1">
-              <kbd className="px-1 py-0.5 bg-zinc-800/50 rounded">↑↓</kbd>
+              <kbd className="px-1 py-0.5 bg-mung-border/30 rounded">↑↓</kbd>
               <span>导航</span>
             </div>
             <div className="flex items-center gap-1">
-              <kbd className="px-1 py-0.5 bg-zinc-800/50 rounded">Enter</kbd>
+              <kbd className="px-1 py-0.5 bg-mung-border/30 rounded">Enter</kbd>
               <span>选择</span>
             </div>
             <div className="flex items-center gap-1">
-              <kbd className="px-1 py-0.5 bg-zinc-800/50 rounded">Esc</kbd>
+              <kbd className="px-1 py-0.5 bg-mung-border/30 rounded">Esc</kbd>
               <span>关闭</span>
             </div>
           </div>
@@ -471,18 +470,18 @@ function AIPanel({
   if (!isOpen) return null
 
   return (
-    <aside className="w-72 h-full border-l border-zinc-800/30 bg-zinc-950/80 flex flex-col">
+    <aside className="w-72 h-full border-l border-mung-border bg-mung-surface/50 flex flex-col">
       {/* 头部 */}
-      <div className="p-3 flex items-center justify-between border-b border-zinc-800/30">
+      <div className="p-3 flex items-center justify-between border-b border-mung-border">
         <div className="flex items-center gap-2">
-          <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-          <span className="text-xs font-medium text-zinc-400">AI 协作</span>
+          <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+          <span className="text-xs font-medium text-mung-text">AI 协作</span>
         </div>
         <button 
           onClick={onClose}
-          className="p-1 hover:bg-zinc-800/50 rounded transition-colors"
+          className="p-1 hover:bg-mung-hover rounded transition-colors"
         >
-          <X className="w-3.5 h-3.5 text-zinc-600" />
+          <X className="w-3.5 h-3.5 text-mung-muted" />
         </button>
       </div>
 
@@ -490,13 +489,13 @@ function AIPanel({
       <div className="flex-1 p-3 overflow-y-auto">
         <div className="space-y-4">
           {/* 状态卡片 */}
-          <div className="p-3 rounded-lg bg-zinc-900/30 border border-zinc-800/30">
+          <div className="p-3 rounded-lg bg-mung-base border border-mung-border">
             <StatusIndicator status={status} progress={progress} />
           </div>
 
           {/* 快捷操作 */}
           <div className="space-y-2">
-            <h4 className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">
+            <h4 className="text-[10px] font-medium text-mung-muted uppercase tracking-wider">
               快捷操作
             </h4>
             <div className="space-y-1">
@@ -508,11 +507,11 @@ function AIPanel({
               ].map((action) => (
                 <button
                   key={action.label}
-                  className="w-full flex items-center gap-2 px-2 py-1.5 text-xs text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/30 rounded-lg transition-colors"
+                  className="w-full flex items-center gap-2 px-2 py-1.5 text-xs text-mung-muted hover:text-mung-text hover:bg-mung-hover rounded-lg transition-colors"
                 >
                   <span>{action.icon}</span>
                   <span className="flex-1 text-left">{action.label}</span>
-                  <kbd className="px-1.5 py-0.5 text-[9px] text-zinc-600 bg-zinc-800/50 rounded">
+                  <kbd className="px-1.5 py-0.5 text-[9px] text-mung-muted bg-mung-border/30 rounded">
                     {action.shortcut}
                   </kbd>
                 </button>
@@ -522,16 +521,16 @@ function AIPanel({
 
           {/* 知识图谱预览 */}
           <div className="space-y-2">
-            <h4 className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">
+            <h4 className="text-[10px] font-medium text-mung-muted uppercase tracking-wider">
               关联图谱
             </h4>
-            <div className="h-36 rounded-lg bg-zinc-900/30 border border-zinc-800/30 flex items-center justify-center">
+            <div className="h-36 rounded-lg bg-mung-base border border-mung-border flex items-center justify-center">
               <div className="text-center">
-                <Network className="w-8 h-8 text-zinc-800 mx-auto mb-2" />
-                <p className="text-[10px] text-zinc-600">
+                <Network className="w-8 h-8 text-mung-border mx-auto mb-2" />
+                <p className="text-[10px] text-mung-muted">
                   暂无关联数据
                 </p>
-                <p className="text-[10px] text-zinc-700 mt-1">
+                <p className="text-[10px] text-mung-muted/70 mt-1">
                   保存笔记后自动生成
                 </p>
               </div>
@@ -568,7 +567,7 @@ export function MainLayout() {
       id: 'new',
       label: '新建笔记',
       description: '创建一个新的空白笔记',
-      icon: <Plus className="w-4 h-4 text-zinc-400" />,
+      icon: <Plus className="w-4 h-4 text-mung-muted" />,
       shortcut: 'Ctrl+N',
       action: () => {
         setTitle('')
@@ -580,7 +579,7 @@ export function MainLayout() {
       id: 'save',
       label: '保存笔记',
       description: '保存当前笔记到数据库',
-      icon: <Save className="w-4 h-4 text-zinc-400" />,
+      icon: <Save className="w-4 h-4 text-mung-muted" />,
       shortcut: 'Ctrl+S',
       action: () => {
         const event = new CustomEvent('editor-save')
@@ -591,7 +590,7 @@ export function MainLayout() {
       id: 'ai',
       label: 'AI 协作',
       description: '打开 AI 协作面板',
-      icon: <Sparkles className="w-4 h-4 text-cyan-400" />,
+      icon: <Sparkles className="w-4 h-4 text-emerald-600" />,
       shortcut: 'Ctrl+Shift+A',
       action: () => setAiPanelOpen(true)
     },
@@ -599,14 +598,14 @@ export function MainLayout() {
       id: 'settings',
       label: '设置',
       description: '打开应用设置',
-      icon: <Settings className="w-4 h-4 text-zinc-400" />,
+      icon: <Settings className="w-4 h-4 text-mung-muted" />,
       action: () => console.log('Settings')
     },
     {
       id: 'help',
       label: '帮助',
       description: '查看快捷键和命令列表',
-      icon: <HelpCircle className="w-4 h-4 text-zinc-400" />,
+      icon: <HelpCircle className="w-4 h-4 text-mung-muted" />,
       shortcut: 'F1',
       action: () => console.log('Help')
     },
@@ -614,10 +613,8 @@ export function MainLayout() {
 
   // 选中笔记回调
   const handleNoteSelect = useCallback((note: { id: string; title: string; summary: string; category: string; tags: string[] }) => {
-    // 设置标题
     setTitle(note.title)
     
-    // 模拟加载笔记内容
     const mockContent = `# ${note.title}
 
 ${note.summary}
@@ -646,7 +643,6 @@ function example() {
     
     setContent(mockContent)
     
-    // 聚焦编辑器
     setTimeout(() => {
       editorRef.current?.focus('end')
     }, 100)
@@ -655,19 +651,16 @@ function example() {
   // 快捷键处理
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Ctrl+K: 打开命令面板
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault()
         setCommandPaletteOpen(prev => !prev)
       }
       
-      // Ctrl+Shift+A: 打开 AI 面板
       if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'A') {
         e.preventDefault()
         setAiPanelOpen(prev => !prev)
       }
 
-      // Ctrl+N: 新建笔记
       if ((e.metaKey || e.ctrlKey) && e.key === 'n') {
         e.preventDefault()
         setTitle('')
@@ -689,24 +682,25 @@ function example() {
   }, [])
 
   return (
-    <div className="flex h-screen w-screen bg-zinc-950 text-zinc-200 font-sans antialiased selection:bg-cyan-500/20">
+    <GlobalBackground>
+    <div className="flex h-screen w-screen">
       {/* 中间主内容区 */}
-      <main className="flex-1 flex flex-col h-full bg-zinc-950 min-w-0">
+      <main className="flex-1 flex flex-col h-full bg-mung-base min-w-0">
         {/* 顶部状态条 */}
-        <header className="h-10 border-b border-zinc-800/20 flex items-center justify-between px-6 text-xs text-zinc-600">
+        <header className="h-10 border-b border-mung-border flex items-center justify-between px-6 text-xs text-mung-muted">
           <div className="flex items-center gap-3">
             {/* Logo */}
             <div className="flex items-center gap-2">
-              <div className="w-5 h-5 rounded bg-zinc-800 flex items-center justify-center">
-                <Sparkles className="w-3 h-3 text-zinc-400" />
+              <div className="w-5 h-5 rounded bg-mung-border/30 flex items-center justify-center">
+                <Sparkles className="w-3 h-3 text-emerald-600" />
               </div>
-              <span className="text-xs font-medium text-zinc-400 tracking-wider">AICATPIN</span>
+              <span className="text-xs font-medium text-mung-text tracking-wider">AICATPIN</span>
             </div>
             
             {/* 扁平路径 */}
             <div className="flex items-center gap-1.5">
-              <span className="text-zinc-700">/</span>
-              <span className="text-zinc-500 italic">未分类</span>
+              <span className="text-mung-border">/</span>
+              <span className="text-mung-muted italic">未分类</span>
             </div>
           </div>
           
@@ -720,7 +714,7 @@ function example() {
             {/* 命令面板 */}
             <button
               onClick={() => setCommandPaletteOpen(true)}
-              className="flex items-center gap-2 px-2 py-1 text-xs text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50 rounded transition-colors"
+              className="flex items-center gap-2 px-2 py-1 text-xs text-mung-muted hover:text-mung-text hover:bg-mung-hover rounded transition-colors"
             >
               <Search className="w-3 h-3" />
               <span>Ctrl+K</span>
@@ -731,7 +725,7 @@ function example() {
               onClick={() => setAiPanelOpen(prev => !prev)}
               className={cn(
                 'p-1 rounded transition-colors',
-                aiPanelOpen ? 'bg-zinc-800/50 text-zinc-400' : 'hover:bg-zinc-800/30'
+                aiPanelOpen ? 'bg-mung-hover text-mung-text' : 'hover:bg-mung-hover/50'
               )}
             >
               <Sparkles className="w-3.5 h-3.5" />
@@ -750,7 +744,7 @@ function example() {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               onKeyDown={handleTitleKeyDown}
-              className="w-full text-4xl font-extrabold tracking-tight leading-tight bg-transparent text-zinc-100 placeholder-zinc-700 focus:outline-none focus:ring-0 border-none mb-6 pb-4 border-b border-zinc-800/30"
+              className="w-full text-4xl font-extrabold tracking-tight leading-tight bg-transparent text-mung-text placeholder-mung-muted/50 focus:outline-none focus:ring-0 border-none mb-6 pb-4 border-b border-mung-border"
             />
 
             {/* TipTap 编辑器 */}
@@ -767,19 +761,19 @@ function example() {
         </div>
 
         {/* 底部状态栏 */}
-        <footer className="h-8 px-6 border-t border-zinc-800/20 flex items-center justify-between text-[11px] text-zinc-600">
+        <footer className="h-8 px-6 border-t border-mung-border flex items-center justify-between text-[11px] text-mung-muted">
           <div className="flex items-center gap-3">
             <span>
               字数: {content.replace(/<[^>]*>/g, '').length}
             </span>
-            <span className="text-zinc-800">·</span>
+            <span className="text-mung-border">·</span>
             <span>
               词数: {content.replace(/<[^>]*>/g, '').split(/\s+/).filter(Boolean).length}
             </span>
           </div>
           
           <div className="flex items-center gap-3">
-            <span className="text-zinc-700">Ctrl+S 保存</span>
+            <span className="text-mung-muted/70">Ctrl+S 保存</span>
             <StatusIndicator status={status} progress={progress} />
           </div>
         </footer>
@@ -802,6 +796,7 @@ function example() {
         progress={progress}
       />
     </div>
+    </GlobalBackground>
   )
 }
 

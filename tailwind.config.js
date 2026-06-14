@@ -1,6 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  darkMode: ["class"],
+  darkMode: false, // 关闭暗色模式
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
@@ -15,6 +15,17 @@ export default {
     },
     extend: {
       colors: {
+        // 豆沙绿主题色系
+        mung: {
+          base: '#C7EDCC',      // 经典豆沙绿，主全局背景
+          surface: '#DCEFD8',   // 略微提亮的护眼绿，用于浮层
+          border: '#A5CBAA',    // 柔和的分割线颜色
+          text: '#2B3A2C',      // 极深的墨绿色，用于正文
+          muted: '#5C745E',     // 次要文字颜色
+          hover: '#B3DEC0',     // 悬浮态背景
+          active: '#A5D4B0',    // 激活态背景
+        },
+        // 保留原有的 border/input/ring 等
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
@@ -67,20 +78,10 @@ export default {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
-        "glow": {
-          "0%, 100%": { boxShadow: "0 0 5px rgba(0, 255, 255, 0.5)" },
-          "50%": { boxShadow: "0 0 20px rgba(0, 255, 255, 0.8)" },
-        },
-        "pulse-glow": {
-          "0%, 100%": { opacity: "0.5" },
-          "50%": { opacity: "1" },
-        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
-        "glow": "glow 2s ease-in-out infinite",
-        "pulse-glow": "pulse-glow 2s ease-in-out infinite",
       },
     },
   },
