@@ -4,6 +4,7 @@ import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
 import { common, createLowlight } from 'lowlight'
+import { Markdown } from 'tiptap-markdown'
 import { cn } from '@/lib/utils'
 import type { Editor } from '@tiptap/react'
 
@@ -19,13 +20,15 @@ export interface CatPinEditorRef {
   getEditor: () => Editor | null
   /** 聚焦编辑器 */
   focus: (position?: 'start' | 'end' | number | boolean) => void
+  /** 获取 Markdown 内容 */
+  getMarkdown: () => string
 }
 
 // CatPinEditor 属性接口
 export interface CatPinEditorProps {
-  /** 初始内容 */
+  /** 初始内容 (Markdown 格式) */
   content?: string
-  /** 内容变化回调 */
+  /** 内容变化回调 (返回 Markdown 格式) */
   onChange?: (content: string) => void
   /** 占位符文本 */
   placeholder?: string
@@ -68,14 +71,20 @@ export const CatPinEditor = forwardRef<CatPinEditorRef, CatPinEditorProps>(funct
         lowlight,
         defaultLanguage: 'javascript',
       }),
+      Markdown.configure({
+        html: false,           // 不解析 HTML
+        transformPastedText: true,  // 粘贴时转换 Markdown
+        transformCopiedText: false, // 复制时不转换
+      }),
       AIBlock,
     ],
     content,
     editable,
     autofocus: autoFocus,
     onUpdate: ({ editor }) => {
-      const html = editor.getHTML()
-      onChange?.(html)
+      // 获取 Markdown 格式的内容
+      const markdown = editor.storage.markdown.getMarkdown()
+      onChange?.(markdown)
     },
     editorProps: {
       attributes: {
@@ -92,6 +101,10 @@ export const CatPinEditor = forwardRef<CatPinEditorRef, CatPinEditorProps>(funct
         editor.chain().focus(position).run()
       }
     },
+    getMarkdown: () => {
+      if (!editor) return ''
+      return editor.storage.markdown.getMarkdown()
+    },
   }), [editor])
 
   // 保存快捷键
@@ -101,9 +114,10 @@ export const CatPinEditor = forwardRef<CatPinEditorRef, CatPinEditorProps>(funct
     const handleKeyDown = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key === 's') {
         event.preventDefault()
-        // 触发保存事件，由父组件处理
+        // 获取 Markdown 内容并触发保存事件
+        const markdown = editor.storage.markdown.getMarkdown()
         const saveEvent = new CustomEvent('editor-save', { 
-          detail: { content: editor.getHTML() } 
+          detail: { content: markdown } 
         })
         window.dispatchEvent(saveEvent)
       }
@@ -155,7 +169,11 @@ export const CatPinEditor = forwardRef<CatPinEditorRef, CatPinEditorProps>(funct
             '[&_.is-editor-empty:first-child::before]:text-zinc-600',
             '[&_.is-editor-empty:first-child::before]:float-left',
             '[&_.is-editor-empty:first-child::before]:h-0',
-            '[&_.is-editor-empty:first-child::before]:pointer-events-none'
+            '[&_.is-editor-empty:first-child::before]:pointer-events-none',
+            // 标题样式
+            '[&_h1]:text-3xl [&_h1]:font-bold [&_h1]:mb-4',
+            '[&_h2]:text-2xl [&_h2]:font-semibold [&_h2]:mb-3',
+            '[&_h3]:text-xl [&_h3]:font-medium [&_h3]:mb-2',
           )}
         />
       </div>
