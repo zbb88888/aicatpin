@@ -25,6 +25,41 @@
     --ring: 222.2 84% 4.9%;
     --radius: 0.5rem;
   }
+
+  .dark {
+    /* 赛博朋克暗色主题 */
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 180 100% 50%;
+    --primary-foreground: 240 10% 3.9%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 180 100% 50%;
+    --radius: 0.5rem;
+
+    /* 赛博朋克特色颜色 */
+    --cyber-cyan: 180 100% 50%;
+    --cyber-magenta: 300 100% 50%;
+    --cyber-yellow: 60 100% 50%;
+    --cyber-green: 120 100% 50%;
+    --cyber-red: 0 100% 50%;
+
+    /* 发光效果 */
+    --glow-cyan: 0 0 10px hsl(180 100% 50% / 0.5);
+    --glow-magenta: 0 0 10px hsl(300 100% 50% / 0.5);
+  }
 }
 
 @layer base {
@@ -33,5 +68,117 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+/* 赛博朋克风格的自定义样式 */
+@layer components {
+  .cyber-border {
+    @apply border border-cyan-500/30;
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0.1);
+  }
+
+  .cyber-glow {
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+  }
+
+  .cyber-text {
+    text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+  }
+
+  .cyber-gradient {
+    background: linear-gradient(135deg, 
+      hsl(180 100% 50% / 0.1) 0%, 
+      hsl(300 100% 50% / 0.1) 50%, 
+      hsl(180 100% 50% / 0.1) 100%
+    );
+  }
+
+  .scanline {
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 255, 255, 0.03) 2px,
+      rgba(0, 255, 255, 0.03) 4px
+    );
+  }
+
+  .noise {
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+    background-size: 200px 200px;
+  }
+
+  .grid-pattern {
+    background-image: 
+      linear-gradient(rgba(0, 255, 255, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 255, 255, 0.05) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+}
+
+/* 滚动条样式 */
+@layer utilities {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(180 100% 50% / 0.3) transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: hsl(180 100% 50% / 0.3);
+    border-radius: 3px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(180 100% 50% / 0.5);
+  }
+}
+
+/* 动画 */
+@layer utilities {
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+
+  .animate-glitch {
+    animation: glitch 2s infinite;
+  }
+
+  @keyframes glitch {
+    0%, 100% {
+      transform: translate(0);
+    }
+    20% {
+      transform: translate(-2px, 2px);
+    }
+    40% {
+      transform: translate(-2px, -2px);
+    }
+    60% {
+      transform: translate(2px, 2px);
+    }
+    80% {
+      transform: translate(2px, -2px);
+    }
   }
 }
