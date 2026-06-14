@@ -60,7 +60,7 @@ export const CatPinEditor = forwardRef<CatPinEditorRef, CatPinEditorProps>(funct
       StarterKit.configure({
         codeBlock: false,
         heading: {
-          levels: [1, 2, 3],
+          levels: [1, 2, 3, 4, 5, 6],
         },
       }),
       Placeholder.configure({
@@ -174,6 +174,9 @@ export const CatPinEditor = forwardRef<CatPinEditorRef, CatPinEditorProps>(funct
             '[&_h1]:text-3xl [&_h1]:font-bold [&_h1]:mb-4',
             '[&_h2]:text-2xl [&_h2]:font-semibold [&_h2]:mb-3',
             '[&_h3]:text-xl [&_h3]:font-medium [&_h3]:mb-2',
+            '[&_h4]:text-lg [&_h4]:font-medium [&_h4]:mb-2',
+            '[&_h5]:text-base [&_h5]:font-medium [&_h5]:mb-1',
+            '[&_h6]:text-sm [&_h6]:font-medium [&_h6]:mb-1',
           )}
         />
       </div>
