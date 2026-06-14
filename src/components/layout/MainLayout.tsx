@@ -110,21 +110,12 @@ function Sidebar({
       <div className="flex-1 px-3 space-y-3">
         {/* 分类搜索 */}
         <div>
-          <div className="flex items-center justify-between mb-1.5">
-            <span className="text-[10px] font-medium text-zinc-600 uppercase tracking-wider">
-              分类
-            </span>
-            <kbd className="px-1 py-0.5 text-[9px] text-zinc-700 bg-zinc-900 rounded">
-              Ctrl+K
-            </kbd>
-          </div>
-          
           <div className="relative">
             <Search className="absolute left-2 top-2 h-3 w-3 text-zinc-600" />
             <input
               ref={categoryInputRef}
               type="text"
-              placeholder="搜索分类..."
+              placeholder="搜索分类 (Ctrl+K)"
               value={categoryQuery}
               onChange={(e) => setCategoryQuery(e.target.value)}
               onFocus={() => setCategoryFocused(true)}
@@ -143,21 +134,12 @@ function Sidebar({
 
         {/* 标签搜索 */}
         <div>
-          <div className="flex items-center justify-between mb-1.5">
-            <span className="text-[10px] font-medium text-zinc-600 uppercase tracking-wider">
-              标签
-            </span>
-            <kbd className="px-1 py-0.5 text-[9px] text-zinc-700 bg-zinc-900 rounded">
-              Ctrl+L
-            </kbd>
-          </div>
-          
           <div className="relative">
             <Hash className="absolute left-2 top-2 h-3 w-3 text-zinc-600" />
             <input
               ref={tagInputRef}
               type="text"
-              placeholder="搜索标签..."
+              placeholder="搜索标签 (Ctrl+L)"
               value={tagQuery}
               onChange={(e) => setTagQuery(e.target.value)}
               onFocus={() => setTagFocused(true)}
