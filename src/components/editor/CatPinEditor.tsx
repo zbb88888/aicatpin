@@ -151,32 +151,48 @@ export const CatPinEditor = forwardRef<CatPinEditorRef, CatPinEditorProps>(funct
         <EditorContent
           editor={editor}
           className={cn(
-            'prose prose-sm prose-invert max-w-none',
-            'prose-headings:text-zinc-200 prose-headings:font-semibold',
-            'prose-p:text-zinc-300 prose-p:leading-relaxed',
-            'prose-strong:text-zinc-200 prose-strong:font-semibold',
-            'prose-em:text-zinc-400',
-            'prose-code:text-cyan-300 prose-code:bg-zinc-800/50 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:before:content-none prose-code:after:content-none',
-            'prose-pre:bg-zinc-900/50 prose-pre:border prose-pre:border-zinc-800/50',
-            'prose-blockquote:border-zinc-700/50 prose-blockquote:text-zinc-400',
-            'prose-ul:text-zinc-300 prose-ol:text-zinc-300',
-            'prose-li:text-zinc-300',
-            'prose-a:text-cyan-400 prose-a:no-underline hover:prose-a:underline',
-            'prose-hr:border-zinc-800/50',
-            'prose-img:rounded-lg prose-img:border prose-img:border-zinc-800/50',
+            'prose prose-invert max-w-none',
+            // H1 主标题：极为醒目
+            '[&_h1]:text-4xl [&_h1]:font-extrabold [&_h1]:tracking-tight [&_h1]:text-zinc-100 [&_h1]:mb-8',
+            // H2 模块标题：强烈的视觉分块感
+            '[&_h2]:text-2xl [&_h2]:font-semibold [&_h2]:text-zinc-200 [&_h2]:mt-12 [&_h2]:pb-2 [&_h2]:border-b [&_h2]:border-zinc-800/50',
+            // H3 子标题
+            '[&_h3]:text-xl [&_h3]:text-zinc-200 [&_h3]:mt-8 [&_h3]:mb-4',
+            // H4-H6
+            '[&_h4]:text-lg [&_h4]:font-medium [&_h4]:text-zinc-200 [&_h4]:mt-6 [&_h4]:mb-3',
+            '[&_h5]:text-base [&_h5]:font-medium [&_h5]:text-zinc-200 [&_h5]:mt-4 [&_h5]:mb-2',
+            '[&_h6]:text-sm [&_h6]:font-medium [&_h6]:text-zinc-200 [&_h6]:mt-4 [&_h6]:mb-2',
+            // 正文段落：提升呼吸感
+            '[&_p]:text-zinc-300 [&_p]:leading-relaxed [&_p]:mb-6',
+            // 粗体
+            '[&_strong]:text-zinc-100 [&_strong]:font-semibold',
+            // 斜体
+            '[&_em]:text-zinc-400',
+            // 内联代码：科技感点缀
+            '[&_code]:text-cyan-400 [&_code]:bg-zinc-800/50 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-sm [&_code]:before:content-none [&_code]:after:content-none',
+            // 代码块
+            '[&_pre]:bg-zinc-900/50 [&_pre]:border [&_pre]:border-zinc-800/50 [&_pre]:rounded-lg [&_pre]:p-4',
+            // 引用
+            '[&_blockquote]:border-l-2 [&_blockquote]:border-zinc-700/50 [&_blockquote]:pl-4 [&_blockquote]:text-zinc-400 [&_blockquote]:italic',
+            // 列表
+            '[&_ul]:text-zinc-300 [&_ol]:text-zinc-300',
+            '[&_li]:text-zinc-300 [&_li]:mb-1',
+            // 链接
+            '[&_a]:text-cyan-400 [&_a]:no-underline hover:[&_a]:underline',
+            // 分割线
+            '[&_hr]:border-zinc-800/50 [&_hr]:my-8',
+            // 图片
+            '[&_img]:rounded-lg [&_img]:border [&_img]:border-zinc-800/50',
+            // 表格
+            '[&_table]:border-collapse',
+            '[&_th]:border [&_th]:border-zinc-800/50 [&_th]:px-3 [&_th]:py-2 [&_th]:bg-zinc-900/50 [&_th]:text-zinc-200 [&_th]:font-medium',
+            '[&_td]:border [&_td]:border-zinc-800/50 [&_td]:px-3 [&_td]:py-2',
             // 占位符样式
             '[&_.is-editor-empty:first-child::before]:content-[attr(data-placeholder)]',
             '[&_.is-editor-empty:first-child::before]:text-zinc-600',
             '[&_.is-editor-empty:first-child::before]:float-left',
             '[&_.is-editor-empty:first-child::before]:h-0',
             '[&_.is-editor-empty:first-child::before]:pointer-events-none',
-            // 标题样式
-            '[&_h1]:text-3xl [&_h1]:font-bold [&_h1]:mb-4',
-            '[&_h2]:text-2xl [&_h2]:font-semibold [&_h2]:mb-3',
-            '[&_h3]:text-xl [&_h3]:font-medium [&_h3]:mb-2',
-            '[&_h4]:text-lg [&_h4]:font-medium [&_h4]:mb-2',
-            '[&_h5]:text-base [&_h5]:font-medium [&_h5]:mb-1',
-            '[&_h6]:text-sm [&_h6]:font-medium [&_h6]:mb-1',
           )}
         />
       </div>
