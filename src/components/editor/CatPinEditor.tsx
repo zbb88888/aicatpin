@@ -34,7 +34,7 @@ export interface CatPinEditorProps {
 export function CatPinEditor({
   content = '',
   onChange,
-  placeholder = '开始记录你的思维碎片...',
+  placeholder = '开始记录...',
   autoFocus = true,
   editable = true,
   className,

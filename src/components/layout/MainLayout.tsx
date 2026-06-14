@@ -481,7 +481,7 @@ export function MainLayout() {
             <CatPinEditor
               content={content}
               onChange={setContent}
-              placeholder="开始记录你的思维碎片..."
+              placeholder="开始记录..."
               height="auto"
               className="border-0 bg-transparent"
             />
