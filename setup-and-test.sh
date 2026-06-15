@@ -132,7 +132,7 @@ cmd_start() {
     log_info "更新环境变量..."
     local supabase_anon_key="your-anon-key"
     if command -v supabase &> /dev/null; then
-        local key=$(supabase status 2>/dev/null | grep "anon key" | awk '{print $NF}')
+        local key=$(supabase status 2>/dev/null | grep "Publishable" | awk -F'│' '{print $3}' | tr -d ' ')
         if [ -n "$key" ]; then
             supabase_anon_key="$key"
         fi
