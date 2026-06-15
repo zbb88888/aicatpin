@@ -1,7 +1,4 @@
-import { useState, useCallback, useRef } from 'react'
-
-// 编辑器模式：只读浏览 vs 编辑态
-export type EditorMode = 'browsing' | 'editing'
+import { useState, useCallback } from 'react'
 
 // 云端笔记元数据
 export interface CloudNote {
@@ -16,28 +13,15 @@ export interface CloudNote {
 }
 
 export function useEditorMode() {
-  const [mode, setMode] = useState<EditorMode>('editing')
   const [currentNote, setCurrentNote] = useState<CloudNote | null>(null)
   const [localFilename, setLocalFilename] = useState<string | null>(null)
   const [editedContent, setEditedContent] = useState<string>('')
-  const originalContent = useRef<string>('')
 
-  // 从云端加载笔记（加载后直接进入编辑态）
+  // 从云端加载笔记
   const loadFromCloud = useCallback((note: CloudNote) => {
     setCurrentNote(note)
     setEditedContent(note.content)
-    originalContent.current = note.content
-    setMode('editing')
     setLocalFilename(null)
-  }, [])
-
-  // 检出到本地编辑
-  const checkoutForEdit = useCallback((note: CloudNote, localFile: string, content: string) => {
-    setCurrentNote(note)
-    setEditedContent(content)
-    originalContent.current = content
-    setLocalFilename(localFile)
-    setMode('editing')
   }, [])
 
   // 更新编辑内容
@@ -45,31 +29,25 @@ export function useEditorMode() {
     setEditedContent(content)
   }, [])
 
-  // 退出编辑态，回到只读浏览
-  const exitEditMode = useCallback(() => {
-    setMode('browsing')
+  // 清除本地文件名（同步入库后调用）
+  const clearLocalFilename = useCallback(() => {
     setLocalFilename(null)
-    // 保持 currentNote 不变，继续显示云端内容
   }, [])
 
   // 清除所有状态（新建笔记时）
   const clearAll = useCallback(() => {
-    setMode('editing')
     setCurrentNote(null)
     setLocalFilename(null)
     setEditedContent('')
-    originalContent.current = ''
   }, [])
 
   return {
-    mode,
     currentNote,
     localFilename,
     editedContent,
     loadFromCloud,
-    checkoutForEdit,
     updateContent,
-    exitEditMode,
+    clearLocalFilename,
     clearAll,
   }
 }

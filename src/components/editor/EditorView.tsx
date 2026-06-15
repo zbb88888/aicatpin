@@ -131,7 +131,7 @@ export function EditorView() {
   const { saveStatus, saveLocalDraft, deleteLocalDraft } = useLocalWorkspace()
   const { 
     currentNote, localFilename, editedContent,
-    loadFromCloud, updateContent, exitEditMode, clearAll 
+    loadFromCloud, updateContent, clearLocalFilename, clearAll 
   } = useEditorMode()
   const { syncStatus, syncProgress, syncToCloud, fetchCloudNotes } = useCloudSync()
   
@@ -189,11 +189,11 @@ export function EditorView() {
     
     if (result.success && localFilename) {
       await deleteLocalDraft(localFilename)
-      exitEditMode()
+      clearLocalFilename()
       const notes = await fetchCloudNotes()
       setCloudNotes(notes)
     }
-  }, [editedContent, currentNote, localFilename, syncToCloud, deleteLocalDraft, exitEditMode, fetchCloudNotes])
+  }, [editedContent, currentNote, localFilename, syncToCloud, deleteLocalDraft, clearLocalFilename, fetchCloudNotes])
 
   // 选择云端笔记
   const handleNoteSelect = useCallback(async (note: CloudNote) => {

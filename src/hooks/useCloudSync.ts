@@ -7,7 +7,7 @@ const OLLAMA_MODEL = 'gemma4:e2b'
 const EMBEDDING_MODEL = 'nomic-embed-text'
 const EMBEDDING_DIM = 1024
 
-export type SyncStatus = 'idle' | 'extracting' | 'embedding' | 'uploading' | 'cleaning' | 'done' | 'error'
+export type SyncStatus = 'idle' | 'extracting' | 'embedding' | 'uploading' | 'done' | 'error'
 
 interface Metadata {
   title: string
@@ -101,7 +101,6 @@ async function upsertToCloud(
 export function useCloudSync() {
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle')
   const [syncProgress, setSyncProgress] = useState('')
-  const [syncError, setSyncError] = useState<string | null>(null)
 
   // 完整的同步入库流程
   const syncToCloud = useCallback(async (
@@ -111,7 +110,6 @@ export function useCloudSync() {
     try {
       setSyncStatus('extracting')
       setSyncProgress('AI 提炼中...')
-      setSyncError(null)
 
       // 1. AI 提取元数据
       let metadata: Metadata
@@ -152,7 +150,6 @@ export function useCloudSync() {
     } catch (err) {
       const msg = err instanceof Error ? err.message : '同步失败'
       setSyncStatus('error')
-      setSyncError(msg)
       setSyncProgress('')
       return { success: false, error: msg }
     }
@@ -173,36 +170,10 @@ export function useCloudSync() {
     return data || []
   }, [])
 
-  // 搜索云端笔记
-  const searchCloudNotes = useCallback(async (query: string): Promise<CloudNote[]> => {
-    const { data, error } = await supabase
-      .from('knowledge_vault')
-      .select('*')
-      .or(`title.ilike.%${query}%,content.ilike.%${query}%,summary.ilike.%${query}%`)
-      .order('updated_at', { ascending: false })
-      .limit(20)
-
-    if (error) {
-      console.error('搜索云端笔记失败:', error)
-      return []
-    }
-    return data || []
-  }, [])
-
-  // 重置同步状态
-  const resetSyncStatus = useCallback(() => {
-    setSyncStatus('idle')
-    setSyncProgress('')
-    setSyncError(null)
-  }, [])
-
   return {
     syncStatus,
     syncProgress,
-    syncError,
     syncToCloud,
     fetchCloudNotes,
-    searchCloudNotes,
-    resetSyncStatus,
   }
 }

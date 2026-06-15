@@ -33,7 +33,7 @@ interface LocalDraft {
   timestamp: number
 }
 
-export type SaveStatus = 'idle' | 'saving' | 'saved' | 'syncing' | 'synced' | 'error'
+export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
 
 export function useLocalWorkspace() {
   const [workspaceDir, setWorkspaceDir] = useState<string | null>(null)
