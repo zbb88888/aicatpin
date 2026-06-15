@@ -44,11 +44,12 @@ help: ## 显示帮助信息
 	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z_-]+:.*##/ {printf "  $(CYAN)%-20s$(NC) %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 	@echo ""
 	@echo "$(YELLOW)示例:$(NC)"
-	@echo "  make dev          # 启动开发环境（仅前端）"
-	@echo "  make start-all    # 启动所有服务（Supabase + Ollama + 前端）"
-	@echo "  make rerun-all    # 重新构建并运行所有服务"
-	@echo "  make status-all   # 查看所有服务状态"
-	@echo "  make stop-all     # 停止所有服务"
+	@echo "  make start        # 启动所有服务（Supabase + Ollama + 前端）"
+	@echo "  make stop         # 停止所有服务"
+	@echo "  make restart      # 重启所有服务"
+	@echo "  make status       # 查看所有服务状态"
+	@echo "  make rerun        # 重新构建并运行所有服务"
+	@echo "  make dev          # 仅启动前端"
 	@echo "  make clean        # 清理容器和镜像"
 	@echo ""
 
@@ -157,27 +158,27 @@ clean-all: ## 清理所有（包括未使用的镜像）
 # 服务管理
 # ============================================================
 
-.PHONY: start
-start: ## 启动前端服务
+.PHONY: start-frontend
+start-frontend: ## 启动前端服务
 	@echo "$(BLUE)启动前端服务...$(NC)"
 	$(DOCKER_COMPOSE) up -d aicatpin
 	@echo "$(GREEN)✓ 前端服务已启动$(NC)"
 
-.PHONY: stop
-stop: ## 停止所有服务
-	@echo "$(BLUE)停止所有服务...$(NC)"
+.PHONY: stop-frontend
+stop-frontend: ## 停止前端服务
+	@echo "$(BLUE)停止前端服务...$(NC)"
 	$(DOCKER_COMPOSE) down
-	@echo "$(GREEN)✓ 所有服务已停止$(NC)"
+	@echo "$(GREEN)✓ 前端服务已停止$(NC)"
 
-.PHONY: restart
-restart: ## 重启前端服务
+.PHONY: restart-frontend
+restart-frontend: ## 重启前端服务
 	@echo "$(BLUE)重启前端服务...$(NC)"
 	$(DOCKER_COMPOSE) restart aicatpin
 	@echo "$(GREEN)✓ 前端服务已重启$(NC)"
 
-.PHONY: status
-status: ## 查看服务状态
-	@echo "$(BLUE)查看服务状态...$(NC)"
+.PHONY: status-frontend
+status-frontend: ## 查看前端服务状态
+	@echo "$(BLUE)查看前端服务状态...$(NC)"
 	$(DOCKER_COMPOSE) ps
 
 .PHONY: logs
@@ -232,8 +233,8 @@ stop-ollama: ## 停止 Ollama 服务
 	@pkill ollama 2>/dev/null || true
 	@echo "$(GREEN)✓ Ollama 已停止$(NC)"
 
-.PHONY: start-all
-start-all: start-supabase start-ollama start ## 启动所有服务（Supabase + Ollama + 前端）
+.PHONY: start
+start: start-supabase start-ollama start-frontend ## 启动所有服务（Supabase + Ollama + 前端）
 	@echo ""
 	@echo "$(GREEN)╔════════════════════════════════════════════════════════════╗$(NC)"
 	@echo "$(GREEN)║                    所有服务已启动                          ║$(NC)"
@@ -246,15 +247,15 @@ start-all: start-supabase start-ollama start ## 启动所有服务（Supabase + 
 	@echo "  • 前端应用:      http://localhost:$(FRONTEND_PORT)"
 	@echo ""
 
-.PHONY: stop-all
-stop-all: stop-ollama stop-supabase stop ## 停止所有服务（Supabase + Ollama + 前端）
+.PHONY: stop
+stop: stop-ollama stop-supabase stop-frontend ## 停止所有服务（Supabase + Ollama + 前端）
 	@echo "$(GREEN)✓ 所有服务已停止$(NC)"
 
-.PHONY: restart-all
-restart-all: stop-all start-all ## 重启所有服务
+.PHONY: restart
+restart: stop start ## 重启所有服务
 
-.PHONY: status-all
-status-all: ## 查看所有服务状态
+.PHONY: status
+status: ## 查看所有服务状态
 	@echo "$(BLUE)查看所有服务状态...$(NC)"
 	@echo ""
 	@echo "$(BLUE)Supabase:$(NC)"
@@ -276,17 +277,17 @@ status-all: ## 查看所有服务状态
 	@$(DOCKER_COMPOSE) ps
 	@echo ""
 
-.PHONY: rerun-all
-rerun-all: ## 重新运行所有服务（清理+构建+启动）
-	@echo "$(BLUE)重新运行 AICatPin（完整版）...$(NC)"
+.PHONY: rerun
+rerun: ## 重新运行所有服务（清理+构建+启动）
+	@echo "$(BLUE)重新运行 AICatPin...$(NC)"
 	@echo "$(BLUE)1. 停止所有服务...$(NC)"
-	@$(MAKE) stop-all
+	@$(MAKE) stop
 	@echo ""
 	@echo "$(BLUE)2. 重新构建镜像...$(NC)"
 	@$(DOCKER_COMPOSE) build --no-cache aicatpin
 	@echo ""
 	@echo "$(BLUE)3. 启动所有服务...$(NC)"
-	@$(MAKE) start-all
+	@$(MAKE) start
 
 # ============================================================
 # 进入容器
