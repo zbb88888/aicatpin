@@ -9,6 +9,7 @@ import { Markdown } from 'tiptap-markdown'
 import { cn } from '@/lib/utils'
 import type { Editor } from '@tiptap/react'
 import { AIBlock } from './extensions/AIBlock'
+import { AutoTitle } from './extensions/AutoTitle'
 import { Pin } from 'lucide-react'
 
 // TipTap 3 类型扩展
@@ -53,6 +54,7 @@ export const CatPinEditor = forwardRef<CatPinEditorRef, CatPinEditorProps>(funct
       CodeBlockLowlight.configure({ lowlight, defaultLanguage: 'javascript' }),
       Markdown.configure({ html: false, transformPastedText: true, transformCopiedText: false }),
       AIBlock,
+      AutoTitle,
     ],
     content, editable, autofocus: autoFocus,
     onUpdate: ({ editor }) => {

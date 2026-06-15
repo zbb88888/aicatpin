@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useAppRouter } from '@/stores/appRouter'
 import { streamChat } from '@/services/ai'
-import { Sparkles, Pin, Send, ArrowLeft } from 'lucide-react'
+import { Pin, Send, ArrowLeft } from 'lucide-react'
 
 interface Message {
   id: string
@@ -103,34 +103,22 @@ export function ChatView() {
   return (
     <div className="flex flex-col h-screen bg-[#1a1a1a] text-gray-100">
       {/* Header */}
-      <header className="h-12 flex items-center justify-between px-6 border-b border-gray-800">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => switchView('editor')}
-            className="flex items-center gap-2 text-gray-400 hover:text-gray-200 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span className="text-sm">返回编辑器</span>
-          </button>
-        </div>
-        <div className="flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-emerald-400" />
-          <span className="text-sm font-medium text-gray-300">AI 对话</span>
-        </div>
-        <div className="w-24" /> {/* 占位 */}
+      <header className="h-10 flex items-center px-6 border-b border-gray-800">
+        <button
+          onClick={() => switchView('editor')}
+          className="flex items-center gap-2 text-gray-400 hover:text-gray-200 transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span className="text-xs">editor</span>
+        </button>
       </header>
 
       {/* 消息区域 */}
       <div className="flex-1 overflow-y-auto px-4 py-6">
         <div className="max-w-3xl mx-auto space-y-6">
           {messages.length === 0 ? (
-            // 空状态
-            <div className="flex flex-col items-center justify-center h-full text-center py-20">
-              <div className="w-16 h-16 rounded-2xl bg-gray-800 flex items-center justify-center mb-4">
-                <Sparkles className="w-8 h-8 text-emerald-400" />
-              </div>
-              <p className="text-gray-400 text-lg mb-2">开始对话</p>
-              <p className="text-gray-600 text-sm">输入问题，AI 会为你解答</p>
+            <div className="flex items-center justify-center h-full">
+              <p className="text-gray-600 text-sm">输入问题开始对话</p>
             </div>
           ) : (
             // 消息列表

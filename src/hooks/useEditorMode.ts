@@ -16,18 +16,18 @@ export interface CloudNote {
 }
 
 export function useEditorMode() {
-  const [mode, setMode] = useState<EditorMode>('browsing')
+  const [mode, setMode] = useState<EditorMode>('editing')
   const [currentNote, setCurrentNote] = useState<CloudNote | null>(null)
   const [localFilename, setLocalFilename] = useState<string | null>(null)
   const [editedContent, setEditedContent] = useState<string>('')
   const originalContent = useRef<string>('')
 
-  // 从云端加载笔记（只读浏览）
+  // 从云端加载笔记（加载后直接进入编辑态）
   const loadFromCloud = useCallback((note: CloudNote) => {
     setCurrentNote(note)
     setEditedContent(note.content)
     originalContent.current = note.content
-    setMode('browsing')
+    setMode('editing')
     setLocalFilename(null)
   }, [])
 

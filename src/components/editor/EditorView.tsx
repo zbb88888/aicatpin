@@ -6,7 +6,7 @@ import { useCloudSync } from '@/hooks/useCloudSync'
 import { CatPinEditor, type CatPinEditorRef } from '@/components/editor/CatPinEditor'
 import { GlobalBackground } from '@/components/Background'
 import type { CloudNote } from '@/hooks/useEditorMode'
-import { Sparkles, Search, Cloud, Edit3, MessageSquare } from 'lucide-react'
+import { Sparkles, Search, MessageSquare } from 'lucide-react'
 
 type LocalSaveStatus = 'idle' | 'saving' | 'saved' | 'error'
 type SyncStatus = 'idle' | 'extracting' | 'embedding' | 'uploading' | 'done' | 'error'
@@ -130,8 +130,8 @@ export function EditorView() {
   const { shuttlePayload, pinToChat, switchView, clearShuttlePayload } = useAppRouter()
   const { saveStatus, saveLocalDraft, deleteLocalDraft } = useLocalWorkspace()
   const { 
-    mode, currentNote, localFilename, editedContent,
-    loadFromCloud, checkoutForEdit, updateContent, exitEditMode, clearAll 
+    currentNote, localFilename, editedContent,
+    loadFromCloud, updateContent, exitEditMode, clearAll 
   } = useEditorMode()
   const { syncStatus, syncProgress, syncToCloud, fetchCloudNotes } = useCloudSync()
   
@@ -200,13 +200,7 @@ export function EditorView() {
     loadFromCloud(note)
   }, [loadFromCloud])
 
-  // 切换到编辑模式
-  const handleEdit = useCallback(async () => {
-    if (!currentNote) return
-    const filename = `${currentNote.title.replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '_')}.md`
-    await saveLocalDraft(currentNote.content, filename)
-    checkoutForEdit(currentNote, filename, currentNote.content)
-  }, [currentNote, saveLocalDraft, checkoutForEdit])
+
 
   // 快捷键
   useEffect(() => {
@@ -243,35 +237,15 @@ export function EditorView() {
               </div>
               <span className="text-mung-border">/</span>
               <span className="text-mung-muted italic">{title}</span>
-              {mode === 'editing' && (
-                <span className="text-emerald-600 text-[10px] px-1.5 py-0.5 bg-emerald-100 rounded">编辑中</span>
-              )}
             </div>
             <div className="flex items-center gap-3">
               <StatusIndicator localStatus={saveStatus as LocalSaveStatus} syncStatus={syncStatus as SyncStatus} progress={syncProgress} />
-              {mode === 'browsing' && currentNote ? (
-                <button 
-                  onClick={handleEdit}
-                  className="flex items-center gap-1.5 px-2 py-1 text-xs text-mung-muted hover:text-mung-text hover:bg-mung-hover rounded"
-                >
-                  <Edit3 className="w-3 h-3" />
-                  <span>编辑</span>
-                </button>
-              ) : mode === 'editing' ? (
-                <button 
-                  onClick={handleSyncToCloud}
-                  className="flex items-center gap-1.5 px-2 py-1 text-xs text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded"
-                >
-                  <Cloud className="w-3 h-3" />
-                  <span>入库</span>
-                </button>
-              ) : null}
               <button 
                 onClick={() => switchView('chat')}
                 className="flex items-center gap-1.5 px-2 py-1 text-xs text-mung-muted hover:text-mung-text hover:bg-mung-hover rounded"
               >
                 <MessageSquare className="w-3 h-3" />
-                <span>AI 对话</span>
+                <span>chat</span>
               </button>
               <button onClick={() => setCmdOpen(true)} className="flex items-center gap-2 px-2 py-1 text-xs text-mung-muted hover:text-mung-text hover:bg-mung-hover rounded">
                 <Search className="w-3 h-3" /><span>Ctrl+K</span>
@@ -287,26 +261,16 @@ export function EditorView() {
             }
           }}>
             <div className="max-w-2xl mx-auto px-8 py-12 min-h-[calc(100vh-7rem)]">
-              {mode === 'browsing' && !currentNote ? (
-                <div className="flex flex-col items-center justify-center h-full text-center">
-                  <div className="w-16 h-16 rounded-2xl bg-mung-border/20 flex items-center justify-center mb-4">
-                    <Cloud className="w-8 h-8 text-mung-muted" />
-                  </div>
-                  <p className="text-mung-muted text-sm mb-2">开始记录你的想法</p>
-                  <p className="text-mung-muted/50 text-xs">输入内容后按 Ctrl+S 保存到本地</p>
-                </div>
-              ) : (
-                <CatPinEditor 
-                  ref={editorRef} 
-                  content={editedContent} 
-                  onChange={updateContent} 
-                  placeholder={mode === 'browsing' ? '' : '请输入主题...'} 
-                  height="auto" 
-                  className="border-0 bg-transparent" 
-                  editable={mode === 'editing'}
-                  onPinToChat={handlePinToChat}
-                />
-              )}
+              <CatPinEditor 
+                ref={editorRef} 
+                content={editedContent} 
+                onChange={updateContent} 
+                placeholder="请输入主题..." 
+                height="auto" 
+                className="border-0 bg-transparent" 
+                editable
+                onPinToChat={handlePinToChat}
+              />
             </div>
           </div>
 
@@ -316,17 +280,7 @@ export function EditorView() {
               <span>字数: {wordCount}</span>
             </div>
             <div className="flex items-center gap-3">
-              {mode === 'editing' ? (
-                <>
-                  <span className="text-mung-muted/70">Ctrl+S 保存</span>
-                  <span className="text-mung-muted/70">·</span>
-                  <span className="text-emerald-600/70">Ctrl+Shift+S 入库</span>
-                  <span className="text-mung-muted/70">·</span>
-                  <span className="text-mung-muted/70">选中文本可 Pin 给 AI</span>
-                </>
-              ) : (
-                <span className="text-mung-muted/70">Ctrl+K 搜索</span>
-              )}
+              <span className="text-emerald-600/70">Ctrl+Shift+S 入库</span>
             </div>
           </footer>
         </main>
