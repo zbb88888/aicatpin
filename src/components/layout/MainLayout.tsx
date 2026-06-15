@@ -218,12 +218,14 @@ export function MainLayout() {
           </header>
 
           <div className="flex-1 overflow-y-auto" onClick={(e) => {
-            // 点击空白区域时聚焦编辑器
-            if (e.target === e.currentTarget || (e.target as HTMLElement).closest('.max-w-2xl')?.querySelector('.ProseMirror')?.contains(e.target as Node) === false) {
+            // 点击空白区域时聚焦编辑器（排除标题输入框）
+            const target = e.target as HTMLElement
+            if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return
+            if (e.target === e.currentTarget || !target.closest('.ProseMirror')) {
               editorRef.current?.focus('end')
             }
           }}>
-            <div className="max-w-2xl mx-auto px-8 py-12 min-h-full">
+            <div className="max-w-2xl mx-auto px-8 py-12 min-h-[calc(100vh-7rem)]">
               <input ref={titleRef} type="text" placeholder="请输入主题" value={title} onChange={e => setTitle(e.target.value)} onKeyDown={handleTitleKey}
                 className="w-full text-4xl font-extrabold tracking-tight leading-tight bg-transparent text-mung-text placeholder-mung-muted/50 outline-none ring-0 focus:outline-none focus:ring-0 border-none mb-6 pb-4" />
               <CatPinEditor ref={editorRef} content={content} onChange={setContent} placeholder="开始记录..." height="auto" className="border-0 bg-transparent" onArrowUpAtTop={focusTitle} />
