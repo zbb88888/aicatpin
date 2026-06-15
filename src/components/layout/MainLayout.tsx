@@ -195,6 +195,23 @@ export function MainLayout() {
     return firstLine.replace(/^#+\s*/, '') || '未命名笔记'
   }, [editedContent])
 
+  // 同步入库
+  const handleSyncToCloud = useCallback(async () => {
+    if (!editedContent.trim()) return
+
+    const result = await syncToCloud(editedContent, currentNote?.id)
+    
+    if (result.success && localFilename) {
+      // 清理本地草稿
+      await deleteLocalDraft(localFilename)
+      // 退出编辑态
+      exitEditMode()
+      // 刷新云端列表
+      const notes = await fetchCloudNotes()
+      setCloudNotes(notes)
+    }
+  }, [editedContent, currentNote, localFilename, syncToCloud, deleteLocalDraft, exitEditMode, fetchCloudNotes])
+
   // 命令列表
   const commands: CommandItem[] = useMemo(() => [
     { 
@@ -225,7 +242,7 @@ export function MainLayout() {
       shortcut: 'Ctrl+Shift+S', 
       action: handleSyncToCloud 
     },
-  ], [editedContent, localFilename, saveLocalDraft, clearAll])
+  ], [editedContent, localFilename, saveLocalDraft, clearAll, handleSyncToCloud])
 
   // 选择云端笔记（只读浏览）
   const handleNoteSelect = useCallback(async (note: CloudNote) => {
@@ -241,23 +258,6 @@ export function MainLayout() {
     await saveLocalDraft(currentNote.content, filename)
     checkoutForEdit(currentNote, filename, currentNote.content)
   }, [currentNote, saveLocalDraft, checkoutForEdit])
-
-  // 同步入库
-  const handleSyncToCloud = useCallback(async () => {
-    if (!editedContent.trim()) return
-
-    const result = await syncToCloud(editedContent, currentNote?.id)
-    
-    if (result.success && localFilename) {
-      // 清理本地草稿
-      await deleteLocalDraft(localFilename)
-      // 退出编辑态
-      exitEditMode()
-      // 刷新云端列表
-      const notes = await fetchCloudNotes()
-      setCloudNotes(notes)
-    }
-  }, [editedContent, currentNote, localFilename, syncToCloud, deleteLocalDraft, exitEditMode, fetchCloudNotes])
 
   // 快捷键
   useEffect(() => {

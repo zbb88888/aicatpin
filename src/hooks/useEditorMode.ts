@@ -61,15 +61,11 @@ export function useEditorMode() {
     originalContent.current = ''
   }, [])
 
-  // 判断是否有未保存的修改
-  const hasUnsavedChanges = editedContent !== originalContent.current
-
   return {
     mode,
     currentNote,
     localFilename,
     editedContent,
-    hasUnsavedChanges,
     loadFromCloud,
     checkoutForEdit,
     updateContent,
