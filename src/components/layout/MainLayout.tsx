@@ -43,30 +43,56 @@ function CommandPalette({ isOpen, onClose, commands }: { isOpen: boolean; onClos
     commands.filter(c => c.label.toLowerCase().includes(query.toLowerCase()) || c.description.toLowerCase().includes(query.toLowerCase())),
     [commands, query])
 
-  useEffect(() => { setIdx(0) }, [query])
-  useEffect(() => { isOpen ? setTimeout(() => inputRef.current?.focus(), 100) : setQuery('') }, [isOpen])
+  // 重置选中索引当查询变化时
+  const handleQueryChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setQuery(e.target.value)
+    setIdx(0)
+  }, [])
 
+  // 处理打开/关闭状态
+  useEffect(() => {
+    if (isOpen) {
+      const timer = setTimeout(() => inputRef.current?.focus(), 100)
+      return () => clearTimeout(timer)
+    }
+  }, [isOpen])
+
+  // 处理关闭时重置查询
+  const handleClose = useCallback(() => {
+    setQuery('')
+    onClose()
+  }, [onClose])
+
+  // 处理键盘事件
   useEffect(() => {
     if (!isOpen) return
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowUp') { e.preventDefault(); setIdx(i => i > 0 ? i - 1 : filtered.length - 1) }
-      else if (e.key === 'ArrowDown') { e.preventDefault(); setIdx(i => i < filtered.length - 1 ? i + 1 : 0) }
-      else if (e.key === 'Enter' && filtered[idx]) { filtered[idx].action(); onClose() }
-      else if (e.key === 'Escape') onClose()
+      if (e.key === 'ArrowUp') {
+        e.preventDefault()
+        setIdx(i => i > 0 ? i - 1 : filtered.length - 1)
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault()
+        setIdx(i => i < filtered.length - 1 ? i + 1 : 0)
+      } else if (e.key === 'Enter' && filtered[idx]) {
+        filtered[idx].action()
+        handleClose()
+      } else if (e.key === 'Escape') {
+        handleClose()
+      }
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [isOpen, filtered, idx, onClose])
+  }, [isOpen, filtered, idx, handleClose])
 
   if (!isOpen) return null
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh]">
-      <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={handleClose} />
       <div className="relative w-full max-w-xl bg-mung-surface border border-mung-border rounded-xl shadow-xl overflow-hidden">
         <div className="flex items-center gap-3 px-4 py-3 border-b border-mung-border">
           <Command className="w-4 h-4 text-mung-muted" />
-          <input ref={inputRef} type="text" placeholder="搜索命令..." value={query} onChange={e => setQuery(e.target.value)}
+          <input ref={inputRef} type="text" placeholder="搜索命令..." value={query} onChange={handleQueryChange}
             className="flex-1 bg-transparent text-sm text-mung-text placeholder-mung-muted focus:outline-none" />
           <kbd className="px-1.5 py-0.5 text-[10px] text-mung-muted bg-mung-border/30 rounded">ESC</kbd>
         </div>
@@ -117,16 +143,21 @@ export function MainLayout() {
   const [content, setContent] = useState('')
   const editorRef = useRef<CatPinEditorRef>(null)
   const titleRef = useRef<HTMLInputElement>(null)
-  const { status, progress } = useCatPinSave()
+  const { saveNote, status, progress, error, resetStatus } = useCatPinSave()
 
   const focusTitle = useCallback(() => titleRef.current?.focus(), [])
   const resetEditor = useCallback(() => { setTitle(''); setContent(''); setTimeout(() => editorRef.current?.focus(), 100) }, [])
 
   const commands: CommandItem[] = useMemo(() => [
     { id: 'new', label: '新建笔记', description: '创建空白笔记', icon: <Plus className="w-4 h-4 text-mung-muted" />, shortcut: 'Ctrl+N', action: resetEditor },
-    { id: 'save', label: '保存笔记', description: '保存到数据库', icon: <Save className="w-4 h-4 text-mung-muted" />, shortcut: 'Ctrl+S', action: () => window.dispatchEvent(new CustomEvent('editor-save')) },
+    { id: 'save', label: '保存笔记', description: '保存到数据库', icon: <Save className="w-4 h-4 text-mung-muted" />, shortcut: 'Ctrl+S', action: () => {
+      const editorContent = editorRef.current?.getMarkdown() ?? ''
+      if (editorContent.trim()) {
+        saveNote(editorContent)
+      }
+    } },
     { id: 'ai', label: 'AI 协作', description: '打开 AI 面板', icon: <Sparkles className="w-4 h-4 text-emerald-600" />, shortcut: 'Ctrl+Shift+A', action: () => setAiOpen(true) },
-  ], [resetEditor])
+  ], [resetEditor, saveNote])
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -137,6 +168,19 @@ export function MainLayout() {
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
   }, [resetEditor])
+
+  // 监听编辑器保存事件
+  useEffect(() => {
+    const handleEditorSave = (e: Event) => {
+      const customEvent = e as CustomEvent<{ content: string }>
+      const editorContent = customEvent.detail?.content ?? editorRef.current?.getMarkdown() ?? ''
+      if (editorContent.trim()) {
+        saveNote(editorContent)
+      }
+    }
+    window.addEventListener('editor-save', handleEditorSave)
+    return () => window.removeEventListener('editor-save', handleEditorSave)
+  }, [saveNote])
 
   const handleTitleKey = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === 'ArrowDown') { e.preventDefault(); editorRef.current?.focus('start') }
@@ -192,6 +236,33 @@ export function MainLayout() {
               <StatusIndicator status={status} progress={progress} />
             </div>
           </footer>
+          
+          {/* 错误提示 */}
+          {status === 'error' && (
+            <div className="fixed bottom-16 right-6 max-w-sm p-4 bg-red-50 border border-red-200 rounded-lg shadow-lg">
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0">
+                  <svg className="w-5 h-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-red-800">保存失败</p>
+                  <p className="mt-1 text-xs text-red-600">
+                    {error || '请确保 Ollama 和 Supabase 服务正在运行'}
+                  </p>
+                  <p className="mt-2 text-xs text-red-500">
+                    运行 <code className="bg-red-100 px-1 rounded">supabase start</code> 和 <code className="bg-red-100 px-1 rounded">ollama serve</code>
+                  </p>
+                </div>
+                <button onClick={resetStatus} className="flex-shrink-0 text-red-500 hover:text-red-700">
+                  <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          )}
         </main>
 
         <CommandPalette isOpen={cmdOpen} onClose={() => setCmdOpen(false)} commands={commands} />

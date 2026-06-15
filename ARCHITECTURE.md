@@ -50,7 +50,7 @@ Tauri/Rust **仅用于**系统级I/O：
 ## 开发准备
 
 ### 环境要求
-- Node.js 18+
+- Node.js 24+
 - Rust 1.70+
 - PostgreSQL 15+
 - Ollama (本地运行在 11434 端口)

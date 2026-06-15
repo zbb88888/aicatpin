@@ -9,6 +9,17 @@ import { cn } from '@/lib/utils'
 import type { Editor } from '@tiptap/react'
 import { AIBlock } from './extensions/AIBlock'
 
+// TipTap 3 类型扩展
+interface MarkdownStorage {
+  getMarkdown: () => string
+}
+
+interface EditorWithMarkdown extends Editor {
+  storage: Editor['storage'] & {
+    markdown?: MarkdownStorage
+  }
+}
+
 const lowlight = createLowlight(common)
 
 export interface CatPinEditorRef {
@@ -41,7 +52,10 @@ export const CatPinEditor = forwardRef<CatPinEditorRef, CatPinEditorProps>(funct
       AIBlock,
     ],
     content, editable, autofocus: autoFocus,
-    onUpdate: ({ editor }) => onChange?.(editor.storage.markdown.getMarkdown()),
+    onUpdate: ({ editor }) => {
+      const editorWithMarkdown = editor as unknown as EditorWithMarkdown
+      onChange?.(editorWithMarkdown.storage.markdown?.getMarkdown() ?? '')
+    },
     editorProps: { attributes: { class: 'focus:outline-none' } },
   })
 
@@ -55,7 +69,10 @@ export const CatPinEditor = forwardRef<CatPinEditorRef, CatPinEditorProps>(funct
   useImperativeHandle(ref, () => ({
     getEditor: () => editor,
     focus: (position = 'start') => editor?.chain().focus(position).run(),
-    getMarkdown: () => editor?.storage.markdown.getMarkdown() ?? '',
+    getMarkdown: () => {
+      const editorWithMarkdown = editor as unknown as EditorWithMarkdown
+      return editorWithMarkdown?.storage.markdown?.getMarkdown() ?? ''
+    },
   }), [editor])
 
   useEffect(() => {
@@ -72,7 +89,8 @@ export const CatPinEditor = forwardRef<CatPinEditorRef, CatPinEditorProps>(funct
     const handler = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 's') {
         e.preventDefault()
-        window.dispatchEvent(new CustomEvent('editor-save', { detail: { content: editor.storage.markdown.getMarkdown() } }))
+        const editorWithMarkdown = editor as unknown as EditorWithMarkdown
+        window.dispatchEvent(new CustomEvent('editor-save', { detail: { content: editorWithMarkdown.storage.markdown?.getMarkdown() ?? '' } }))
       }
     }
     document.addEventListener('keydown', handler)

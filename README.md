@@ -13,15 +13,16 @@
 ## 技术栈
 
 - **桌面框架:** Tauri v2 (Rust)
-- **前端:** React + Vite + Tailwind CSS + shadcn/ui
-- **编辑器:** TipTap (无头、块级)
+- **前端:** React 19 + Vite 8 + Tailwind CSS 4 + shadcn/ui
+- **编辑器:** TipTap 3 (无头、块级)
 - **数据库:** PostgreSQL 15+ (Supabase)
 - **AI:** Ollama (本地运行)
+- **语言:** TypeScript 6 + Node.js 24+
 
 ## 快速开始
 
 ### 前置要求
-- Node.js 18+
+- Node.js 24+
 - Rust 1.70+
 - PostgreSQL 15+
 - Ollama (运行在 http://localhost:11434)
