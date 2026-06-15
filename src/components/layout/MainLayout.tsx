@@ -139,14 +139,17 @@ function AIPanel({ isOpen, onClose, status, progress }: { isOpen: boolean; onClo
 export function MainLayout() {
   const [cmdOpen, setCmdOpen] = useState(false)
   const [aiOpen, setAiOpen] = useState(false)
-  const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const editorRef = useRef<CatPinEditorRef>(null)
-  const titleRef = useRef<HTMLInputElement>(null)
   const { saveNote, status, progress, error, resetStatus } = useCatPinSave()
 
-  const focusTitle = useCallback(() => titleRef.current?.focus(), [])
-  const resetEditor = useCallback(() => { setTitle(''); setContent(''); setTimeout(() => editorRef.current?.focus(), 100) }, [])
+  const resetEditor = useCallback(() => { setContent(''); setTimeout(() => editorRef.current?.focus(), 100) }, [])
+
+  // 从内容中提取标题（第一行）
+  const title = useMemo(() => {
+    const firstLine = content.split('\n')[0]?.trim() || ''
+    return firstLine.replace(/^#+\s*/, '') // 移除 Markdown 标题标记
+  }, [content])
 
   const commands: CommandItem[] = useMemo(() => [
     { id: 'new', label: '新建笔记', description: '创建空白笔记', icon: <Plus className="w-4 h-4 text-mung-muted" />, shortcut: 'Ctrl+N', action: resetEditor },
@@ -182,10 +185,6 @@ export function MainLayout() {
     return () => window.removeEventListener('editor-save', handleEditorSave)
   }, [saveNote])
 
-  const handleTitleKey = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' || e.key === 'ArrowDown') { e.preventDefault(); editorRef.current?.focus('start') }
-  }, [])
-
   const text = content.replace(/<[^>]*>/g, '')
 
   return (
@@ -201,7 +200,7 @@ export function MainLayout() {
                 <span className="text-xs font-medium text-mung-text tracking-wider">AICATPIN</span>
               </div>
               <span className="text-mung-border">/</span>
-              <span className="text-mung-muted italic">未分类</span>
+              <span className="text-mung-muted italic">{title || '未命名笔记'}</span>
             </div>
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-1.5">
@@ -218,17 +217,14 @@ export function MainLayout() {
           </header>
 
           <div className="flex-1 overflow-y-auto" onClick={(e) => {
-            // 点击空白区域时聚焦编辑器（排除标题输入框）
+            // 点击空白区域时聚焦编辑器
             const target = e.target as HTMLElement
-            if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return
             if (e.target === e.currentTarget || !target.closest('.ProseMirror')) {
               editorRef.current?.focus('end')
             }
           }}>
             <div className="max-w-2xl mx-auto px-8 py-12 min-h-[calc(100vh-7rem)]">
-              <input ref={titleRef} type="text" placeholder="请输入主题" value={title} onChange={e => setTitle(e.target.value)} onKeyDown={handleTitleKey}
-                className="w-full text-4xl font-extrabold tracking-tight leading-tight bg-transparent text-mung-text placeholder-mung-muted/50 outline-none ring-0 focus:outline-none focus:ring-0 border-none mb-6 pb-4" />
-              <CatPinEditor ref={editorRef} content={content} onChange={setContent} placeholder="开始记录..." height="auto" className="border-0 bg-transparent" onArrowUpAtTop={focusTitle} />
+              <CatPinEditor ref={editorRef} content={content} onChange={setContent} placeholder="请输入主题..." height="auto" className="border-0 bg-transparent" />
             </div>
           </div>
 
