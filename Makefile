@@ -214,7 +214,7 @@ start-ollama: ## 启动 Ollama 服务
 		if curl -s --max-time 2 http://localhost:11434/ >/dev/null 2>&1; then \
 			echo "$(GREEN)✓ Ollama 已在运行$(NC)"; \
 		else \
-			ollama serve &; \
+			ollama serve & \
 			sleep 3; \
 			echo "$(GREEN)✓ Ollama 已启动$(NC)"; \
 		fi; \
