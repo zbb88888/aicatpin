@@ -1,5 +1,6 @@
 import { useEffect, useCallback, forwardRef, useImperativeHandle } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
+import { BubbleMenu } from '@tiptap/react/menus'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
@@ -8,6 +9,7 @@ import { Markdown } from 'tiptap-markdown'
 import { cn } from '@/lib/utils'
 import type { Editor } from '@tiptap/react'
 import { AIBlock } from './extensions/AIBlock'
+import { Pin } from 'lucide-react'
 
 // TipTap 3 类型扩展
 interface MarkdownStorage {
@@ -37,11 +39,12 @@ interface CatPinEditorProps {
   className?: string
   height?: string | number
   onArrowUpAtTop?: () => void
+  onPinToChat?: () => void
 }
 
 export const CatPinEditor = forwardRef<CatPinEditorRef, CatPinEditorProps>(function CatPinEditor({
   content = '', onChange, placeholder = '开始记录...', autoFocus = true, editable = true,
-  className, height = '100%', onArrowUpAtTop,
+  className, height = '100%', onArrowUpAtTop, onPinToChat,
 }, ref) {
   const editor = useEditor({
     extensions: [
@@ -101,6 +104,22 @@ export const CatPinEditor = forwardRef<CatPinEditorRef, CatPinEditorProps>(funct
 
   return (
     <div className={cn('flex flex-col', className)} style={{ height }}>
+      {/* Bubble Menu - 选中文本时显示 */}
+      {editable && onPinToChat && (
+        <BubbleMenu 
+          editor={editor}
+          className="bg-mung-surface border border-mung-border rounded-lg shadow-lg px-1 py-1 flex items-center gap-1"
+        >
+          <button
+            onClick={onPinToChat}
+            className="flex items-center gap-1.5 px-2 py-1 text-xs text-mung-muted hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors"
+          >
+            <Pin className="w-3 h-3" />
+            <span>Pin 给 AI</span>
+          </button>
+        </BubbleMenu>
+      )}
+      
       <div className="flex-1 overflow-y-auto">
         <EditorContent editor={editor} className={cn(
           'prose max-w-none',
