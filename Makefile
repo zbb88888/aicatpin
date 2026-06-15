@@ -44,9 +44,11 @@ help: ## 显示帮助信息
 	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z_-]+:.*##/ {printf "  $(CYAN)%-20s$(NC) %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 	@echo ""
 	@echo "$(YELLOW)示例:$(NC)"
-	@echo "  make dev          # 启动开发环境"
-	@echo "  make build        # 构建镜像"
-	@echo "  make rerun        # 重新构建并运行"
+	@echo "  make dev          # 启动开发环境（仅前端）"
+	@echo "  make start-all    # 启动所有服务（Supabase + Ollama + 前端）"
+	@echo "  make rerun-all    # 重新构建并运行所有服务"
+	@echo "  make status-all   # 查看所有服务状态"
+	@echo "  make stop-all     # 停止所有服务"
 	@echo "  make clean        # 清理容器和镜像"
 	@echo ""
 
@@ -114,6 +116,9 @@ rerun: ## 重新运行（清理+构建+启动）
 	@echo ""
 	@echo "$(GREEN)访问地址:$(NC)"
 	@echo "  前端: http://localhost:$(FRONTEND_PORT)"
+	@echo ""
+	@echo "$(YELLOW)注意: 请确保 Supabase 和 Ollama 服务已启动$(NC)"
+	@echo "  运行: make start-all 启动所有服务"
 
 # ============================================================
 # 构建
@@ -179,6 +184,107 @@ status: ## 查看服务状态
 logs: ## 查看前端服务日志
 	@echo "$(BLUE)查看前端服务日志...$(NC)"
 	$(DOCKER_COMPOSE) logs -f aicatpin
+
+# ============================================================
+# 完整服务管理
+# ============================================================
+
+.PHONY: start-supabase
+start-supabase: ## 启动 Supabase 服务
+	@echo "$(BLUE)启动 Supabase...$(NC)"
+	@if command -v supabase >/dev/null 2>&1; then \
+		supabase start; \
+	else \
+		echo "$(RED)错误: Supabase CLI 未安装$(NC)"; \
+		echo "安装命令: npm install -g supabase"; \
+		exit 1; \
+	fi
+	@echo "$(GREEN)✓ Supabase 已启动$(NC)"
+
+.PHONY: stop-supabase
+stop-supabase: ## 停止 Supabase 服务
+	@echo "$(BLUE)停止 Supabase...$(NC)"
+	@supabase stop 2>/dev/null || true
+	@echo "$(GREEN)✓ Supabase 已停止$(NC)"
+
+.PHONY: start-ollama
+start-ollama: ## 启动 Ollama 服务
+	@echo "$(BLUE)启动 Ollama...$(NC)"
+	@if command -v ollama >/dev/null 2>&1; then \
+		if curl -s --max-time 2 http://localhost:11434/ >/dev/null 2>&1; then \
+			echo "$(GREEN)✓ Ollama 已在运行$(NC)"; \
+		else \
+			ollama serve &; \
+			sleep 3; \
+			echo "$(GREEN)✓ Ollama 已启动$(NC)"; \
+		fi; \
+	else \
+		echo "$(RED)错误: Ollama 未安装$(NC)"; \
+		echo "安装命令: curl -fsSL https://ollama.ai/install.sh | sh"; \
+		exit 1; \
+	fi
+
+.PHONY: stop-ollama
+stop-ollama: ## 停止 Ollama 服务
+	@echo "$(BLUE)停止 Ollama...$(NC)"
+	@pkill ollama 2>/dev/null || true
+	@echo "$(GREEN)✓ Ollama 已停止$(NC)"
+
+.PHONY: start-all
+start-all: start-supabase start-ollama start ## 启动所有服务（Supabase + Ollama + 前端）
+	@echo ""
+	@echo "$(GREEN)╔════════════════════════════════════════════════════════════╗$(NC)"
+	@echo "$(GREEN)║                    所有服务已启动                          ║$(NC)"
+	@echo "$(GREEN)╚════════════════════════════════════════════════════════════╝$(NC)"
+	@echo ""
+	@echo "$(GREEN)服务地址:$(NC)"
+	@echo "  • Supabase API:  http://localhost:54321"
+	@echo "  • Supabase UI:   http://localhost:54323"
+	@echo "  • Ollama:        http://localhost:11434"
+	@echo "  • 前端应用:      http://localhost:$(FRONTEND_PORT)"
+	@echo ""
+
+.PHONY: stop-all
+stop-all: stop-ollama stop-supabase stop ## 停止所有服务（Supabase + Ollama + 前端）
+	@echo "$(GREEN)✓ 所有服务已停止$(NC)"
+
+.PHONY: restart-all
+restart-all: stop-all start-all ## 重启所有服务
+
+.PHONY: status-all
+status-all: ## 查看所有服务状态
+	@echo "$(BLUE)查看所有服务状态...$(NC)"
+	@echo ""
+	@echo "$(BLUE)Supabase:$(NC)"
+	@if command -v supabase >/dev/null 2>&1; then \
+		supabase status 2>/dev/null || echo "  未运行"; \
+	else \
+		echo "  未安装"; \
+	fi
+	@echo ""
+	@echo "$(BLUE)Ollama:$(NC)"
+	@if curl -s --max-time 2 http://localhost:11434/ >/dev/null 2>&1; then \
+		echo "  运行中"; \
+		ollama list 2>/dev/null | head -5 || true; \
+	else \
+		echo "  未运行"; \
+	fi
+	@echo ""
+	@echo "$(BLUE)前端服务:$(NC)"
+	@$(DOCKER_COMPOSE) ps
+	@echo ""
+
+.PHONY: rerun-all
+rerun-all: ## 重新运行所有服务（清理+构建+启动）
+	@echo "$(BLUE)重新运行 AICatPin（完整版）...$(NC)"
+	@echo "$(BLUE)1. 停止所有服务...$(NC)"
+	@$(MAKE) stop-all
+	@echo ""
+	@echo "$(BLUE)2. 重新构建镜像...$(NC)"
+	@$(DOCKER_COMPOSE) build --no-cache aicatpin
+	@echo ""
+	@echo "$(BLUE)3. 启动所有服务...$(NC)"
+	@$(MAKE) start-all
 
 # ============================================================
 # 进入容器
