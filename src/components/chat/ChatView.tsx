@@ -1,5 +1,6 @@
-import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { useAppRouter } from '@/stores/appRouter'
+import { streamChat } from '@/services/ai'
 import { Sparkles, Pin, Send, ArrowLeft } from 'lucide-react'
 
 interface Message {
@@ -9,52 +10,8 @@ interface Message {
   timestamp: number
 }
 
-const OLLAMA_URL = 'http://127.0.0.1:11434'
-const OLLAMA_MODEL = 'gemma4:e2b'
-
-async function generateTitle(text: string): Promise<string> {
-  try {
-    const res = await fetch(`${OLLAMA_URL}/api/generate`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: OLLAMA_MODEL,
-        prompt: `为以下文本生成一个3-5个字的子主题标题，只返回标题，不要其他内容：\n\n${text.substring(0, 500)}`,
-        stream: false,
-        options: { temperature: 0.3, num_predict: 20 }
-      }),
-    })
-    if (!res.ok) return text.substring(0, 10).replace(/[#\n]/g, '').trim()
-    const data = await res.json()
-    return data.response?.trim().replace(/["'""]/g, '') || text.substring(0, 10)
-  } catch {
-    return text.substring(0, 10).replace(/[#\n]/g, '').trim()
-  }
-}
-
-async function chatWithAI(messages: Message[]): Promise<string> {
-  try {
-    const prompt = messages.map(m => `${m.role === 'user' ? '用户' : '助手'}: ${m.content}`).join('\n')
-    const res = await fetch(`${OLLAMA_URL}/api/generate`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: OLLAMA_MODEL,
-        prompt: `你是一个智能助手，用简洁专业的中文回答问题。\n\n${prompt}\n助手:`,
-        stream: false,
-        options: { temperature: 0.7, num_predict: 1000 }
-      }),
-    })
-    if (!res.ok) throw new Error('AI 请求失败')
-    const data = await res.json()
-    return data.response?.trim() || '抱歉，无法生成回答。'
-  } catch {
-    return '抱歉，AI 服务暂时不可用。'
-  }
-}
-
 export function ChatView() {
-  const { shuttleContext, pinToEditor, switchView } = useAppRouter()
+  const { shuttlePayload, pinToEditor, switchView, clearShuttlePayload } = useAppRouter()
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -71,14 +28,18 @@ export function ChatView() {
     inputRef.current?.focus()
   }, [])
 
-  // 处理从编辑器传来的上下文 - 使用 useMemo 计算当前输入值
-  const displayInput = useMemo(() => {
-    return shuttleContext || input
-  }, [shuttleContext, input])
+  // 处理从编辑器穿梭过来的内容 — 自动填入输入框
+  useEffect(() => {
+    if (shuttlePayload && !shuttlePayload.title) {
+      // pinToChat 的 payload 没有 title，说明是从编辑器穿梭过来的
+      setInput(shuttlePayload.content)
+      clearShuttlePayload()
+    }
+  }, [shuttlePayload, clearShuttlePayload])
 
-  // 发送消息
+  // 发送消息（流式）
   const handleSend = useCallback(async () => {
-    const text = displayInput.trim()
+    const text = input.trim()
     if (!text || isLoading) return
 
     const userMessage: Message = {
@@ -92,27 +53,43 @@ export function ChatView() {
     setInput('')
     setIsLoading(true)
 
+    // 先插入一个空的 assistant 消息占位
+    const assistantId = (Date.now() + 1).toString()
+    const assistantMessage: Message = {
+      id: assistantId,
+      role: 'assistant',
+      content: '',
+      timestamp: Date.now(),
+    }
+    setMessages(prev => [...prev, assistantMessage])
+
     try {
-      const response = await chatWithAI([...messages, userMessage])
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: response,
-        timestamp: Date.now(),
+      // 使用流式 API 逐块更新 assistant 消息
+      for await (const chunk of streamChat(text)) {
+        setMessages(prev =>
+          prev.map(m =>
+            m.id === assistantId
+              ? { ...m, content: m.content + chunk }
+              : m
+          )
+        )
       }
-      setMessages(prev => [...prev, assistantMessage])
     } catch {
-      // 错误处理
+      setMessages(prev =>
+        prev.map(m =>
+          m.id === assistantId
+            ? { ...m, content: '抱歉，AI 服务暂时不可用。' }
+            : m
+        )
+      )
     } finally {
       setIsLoading(false)
     }
-  }, [displayInput, isLoading, messages])
+  }, [input, isLoading])
 
-  // Pin 到编辑器
+  // Pin 到编辑器 — 直接调用 store 的异步 pinToEditor
   const handlePinToEditor = useCallback(async (content: string) => {
-    const title = await generateTitle(content)
-    const html = `<h2>${title}</h2>\n${content}`
-    pinToEditor(html)
+    await pinToEditor(content)
   }, [pinToEditor])
 
   // 键盘事件
@@ -171,7 +148,7 @@ export function ChatView() {
                   </div>
                   
                   {/* Pin 按钮 - 仅 AI 回答显示 */}
-                  {msg.role === 'assistant' && (
+                  {msg.role === 'assistant' && msg.content && (
                     <button
                       onClick={() => handlePinToEditor(msg.content)}
                       className="mt-2 flex items-center gap-1.5 text-xs text-gray-500 hover:text-emerald-400 transition-colors"
@@ -186,7 +163,7 @@ export function ChatView() {
           )}
           
           {/* 加载指示器 */}
-          {isLoading && (
+          {isLoading && messages[messages.length - 1]?.content === '' && (
             <div className="flex justify-start">
               <div className="bg-gray-800 rounded-2xl px-4 py-3">
                 <div className="flex items-center gap-2">
@@ -208,7 +185,7 @@ export function ChatView() {
             <input
               ref={inputRef}
               type="text"
-              value={displayInput}
+              value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="输入问题..."
@@ -217,7 +194,7 @@ export function ChatView() {
             />
             <button
               onClick={handleSend}
-              disabled={!displayInput.trim() || isLoading}
+              disabled={!input.trim() || isLoading}
               className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-500 hover:text-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               <Send className="w-4 h-4" />

@@ -127,7 +127,7 @@ function CommandPalette({ isOpen, onClose, notes, onNoteSelect }: {
 }
 
 export function EditorView() {
-  const { shuttleContext, pinToChat, switchView } = useAppRouter()
+  const { shuttlePayload, pinToChat, switchView, clearShuttlePayload } = useAppRouter()
   const { saveStatus, saveLocalDraft, deleteLocalDraft } = useLocalWorkspace()
   const { 
     mode, currentNote, localFilename, editedContent,
@@ -150,22 +150,22 @@ export function EditorView() {
     return firstLine.replace(/^#+\s*/, '') || '未命名笔记'
   }, [editedContent])
 
-  // 处理从 Chat 视图传来的上下文（自动插入）
+  // 处理从 Chat 视图 Pin 过来的内容（自动插入）
   useEffect(() => {
-    if (shuttleContext) {
+    if (shuttlePayload && shuttlePayload.title) {
+      // 有 title 说明是从 Chat Pin 到编辑器的
       const editor = editorRef.current?.getEditor()
       if (editor) {
-        // 在当前光标位置或文档末尾插入
         const { from } = editor.state.selection
+        const insertHtml = `<h2>${shuttlePayload.title}</h2>\n${shuttlePayload.content}`
         editor.chain()
           .focus()
-          .insertContentAt(from, shuttleContext)
+          .insertContentAt(from, insertHtml)
           .run()
       }
-      // 清空上下文
-      useAppRouter.getState().setShuttleContext('')
+      clearShuttlePayload()
     }
-  }, [shuttleContext])
+  }, [shuttlePayload, clearShuttlePayload])
 
   // Pin 选中文本到 Chat
   const handlePinToChat = useCallback(() => {
