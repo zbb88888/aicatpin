@@ -195,7 +195,7 @@ start-supabase: ## 启动 Supabase 服务
 	@echo "$(BLUE)启动 Supabase...$(NC)"
 	@if command -v supabase >/dev/null 2>&1; then \
 		supabase start; \
-		@echo "$(BLUE)运行数据库迁移...$(NC)"; \
+		echo "$(BLUE)运行数据库迁移...$(NC)"; \
 		supabase db reset 2>/dev/null || true; \
 	else \
 		echo "$(RED)错误: Supabase CLI 未安装$(NC)"; \
